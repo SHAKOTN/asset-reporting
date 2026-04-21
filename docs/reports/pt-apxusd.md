@@ -87,6 +87,193 @@ Canonical addresses for the protocol. Click any address to open it on Etherscan.
 | ADMIN Safe (4/6) | [`0xabdd…5e96`](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96) | Gnosis Safe 4-of-6 | Holds AccessManager role 0. 0 exec delay. No Safe Guard/Modules. |
 | MAINTAINER-LONG Safe (3/6) | [`0xf986…3ce2`](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663ce2) | Gnosis Safe 3-of-6 | Roles 2/21/22/23/24/25. Shares 5-of-6 owners with ADMIN Safe. |
 
+## Access-control walk
+
+A numbered walkthrough for verifying this asset's access-control surface yourself. Start at step 1, run the commands, follow the `Next` pointers.
+
+### Step 1 — PT-apxUSD token (Pendle PT)
+
+Address: [`0x92a6…1dcb`](https://etherscan.io/address/0x92a6a01b07984de46c24e8eba248449beb8b1dcb)
+
+*Why*: Start here — this is the asset Fira would seize on liquidation. Pendle PTs are non-upgradeable and only the paired YT can mint/burn, so you confirm immutability and follow the YT/SY pointer.
+
+```bash
+# PT mint/burn is gated to paired YT — confirm the address
+cast call 0x92a6a01b07984de46c24e8eba248449beb8b1dcb 'YT()(address)' --rpc-url $RPC
+# → expect: 0x7807c638383B95aC5d58De10d3079e2140D47C22
+# Find the SY (owns the underlying apxUSD)
+cast call 0x92a6a01b07984de46c24e8eba248449beb8b1dcb 'SY()(address)' --rpc-url $RPC
+# → expect: 0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC
+# Confirm non-upgradeable — no EIP-1967 impl slot
+cast storage 0x92a6a01b07984de46c24e8eba248449beb8b1dcb 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc --rpc-url $RPC
+# → expect: 0x0000…0000 (not a proxy)
+```
+
+**Next:** Step 2 (YT-apxUSD) → Step 3 (SY-apxUSD (Pendle Standardized Yield wrapper))
+
+### Step 2 — YT-apxUSD
+
+Address: [`0x7807…7C22`](https://etherscan.io/address/0x7807c638383B95aC5d58De10d3079e2140D47C22)
+
+*Why*: The YT is the only address allowed to call mint/burn on the PT. Standard Pendle V2 YieldContract — no admin of its own; it delegates to the Pendle factory and the SY.
+
+```bash
+# Confirm YT's SY pointer matches step 1's SY
+cast call 0x7807c638383B95aC5d58De10d3079e2140D47C22 'SY()(address)' --rpc-url $RPC
+# → expect: 0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC
+# Find the Pendle factory that deployed this YT (for gov context)
+cast call 0x7807c638383B95aC5d58De10d3079e2140D47C22 'factory()(address)' --rpc-url $RPC
+# → expect: Pendle YieldContractFactory (immutable)
+```
+
+**Next:** Step 4 (apxUSD token (underlying, AccessManaged UUPS))
+
+### Step 3 — SY-apxUSD (Pendle Standardized Yield wrapper)
+
+Address: [`0x4f11…b3FC`](https://etherscan.io/address/0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC)
+
+*Why*: SY holds the real apxUSD on behalf of PT/YT holders. It is an ERC1967 proxy — confirm who can upgrade it, since a malicious SY upgrade is the cleanest exit route for held apxUSD.
+
+```bash
+# Read the EIP-1967 implementation slot
+cast storage 0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc --rpc-url $RPC
+# → expect: current SY implementation address
+# Read the EIP-1967 admin slot — who can call upgradeToAndCall
+cast storage 0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103 --rpc-url $RPC
+# → expect: Pendle governance multisig or ProxyAdmin — cross-check against Pendle's published governance
+# Confirm SY's yield-token pointer is apxUSD
+cast call 0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC 'yieldToken()(address)' --rpc-url $RPC
+# → expect: 0x98A878b1Cd98131B271883B390f68D2c90674665 (apxUSD)
+```
+
+**Next:** Step 4 (apxUSD token (underlying, AccessManaged UUPS))
+
+### Step 4 — apxUSD token (underlying, AccessManaged UUPS)
+
+Address: [`0x98A8…4665`](https://etherscan.io/address/0x98A878b1Cd98131B271883B390f68D2c90674665)
+
+*Why*: This is where all the real access-control risk lives. apxUSD is a UUPS proxy governed by an OpenZeppelin AccessManager. `mint`, `pause`, `setDenyList`, `upgradeToAndCall` all route through it.
+
+```bash
+# Find the AccessManager (the authority)
+cast call 0x98A878b1Cd98131B271883B390f68D2c90674665 'authority()(address)' --rpc-url $RPC
+# → expect: 0xe167330E2Eac88666de253e9607C6d9ae0cA2824
+# Read current implementation
+cast storage 0x98A878b1Cd98131B271883B390f68D2c90674665 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc --rpc-url $RPC
+# → expect: 0xDd71Fd677fde2ed2579a3c45204f41a11016ccB4
+# Which role gates mint? (selector 0x40c10f19)
+cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getTargetFunctionRole(address,bytes4)(uint64)' 0x98A878b1Cd98131B271883B390f68D2c90674665 0x40c10f19 --rpc-url $RPC
+# → expect: 4 (MINTER_CONTRACT_4HR — points at MinterV0)
+# Which role gates upgradeToAndCall? (selector 0x4f1ef286)
+cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getTargetFunctionRole(address,bytes4)(uint64)' 0x98A878b1Cd98131B271883B390f68D2c90674665 0x4f1ef286 --rpc-url $RPC
+# → expect: 24 (MAINTAINER_LONG)
+# apxUSD target admin delay
+cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getTargetAdminDelay(address)(uint32)' 0x98A878b1Cd98131B271883B390f68D2c90674665 --rpc-url $RPC
+# → expect: 259200 (3 days)
+```
+
+**Next:** Step 5 (MinterV0 (mint controller, AccessManager role 4)) → Step 6 (MAINTAINER-LONG Safe (3-of-6, apxUSD upgrader))
+
+### Step 5 — MinterV0 (mint controller, AccessManager role 4)
+
+Address: [`0x2c36…a76e`](https://etherscan.io/address/0x2c36e1adFaA80ee0324B04cC814F5207Bb7Ba76e)
+
+*Why*: MinterV0 is what actually mints apxUSD. It enforces a 10M/day rate cap and requires signed EIP-712 orders — but its `requestMint` is gated by role 2, held by the MAINTAINER 3/6 Safe, so a 3/6 quorum ultimately controls issuance subject to the per-day cap.
+
+```bash
+# Confirm MinterV0's authority is the same AccessManager
+cast call 0x2c36e1adFaA80ee0324B04cC814F5207Bb7Ba76e 'authority()(address)' --rpc-url $RPC
+# → expect: 0xe167330E2Eac88666de253e9607C6d9ae0cA2824
+# Which role gates MinterV0.requestMint?
+cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getTargetFunctionRole(address,bytes4)(uint64)' 0x2c36e1adFaA80ee0324B04cC814F5207Bb7Ba76e $(cast sig 'requestMint(...)' || echo '0x00000000') --rpc-url $RPC
+# → expect: 2 (MINTER_CONTRACT) — held by MAINTAINER Safe 0xf9862…
+# Inspect the daily mint cap (state var — varies by impl)
+cast call 0x2c36e1adFaA80ee0324B04cC814F5207Bb7Ba76e 'mintCapDaily()(uint256)' --rpc-url $RPC
+# → expect: 10_000_000e18 (10M apxUSD/day)
+```
+
+**Next:** Step 7 (ADMIN Safe (4-of-6, AccessManager role 0))
+
+### Step 6 — MAINTAINER-LONG Safe (3-of-6, apxUSD upgrader)
+
+Address: [`0xf986…3ce2`](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663ce2)
+
+*Why*: Holds role 24 (apxUSD upgradeToAndCall, 3-day exec delay) plus pause (role 21, instant), setDenyList/setSupplyCap (role 23, 1-day), setCCIPAdmin (role 25, 7-day). 3 of its 6 keys can push an apxUSD upgrade after 3 days.
+
+```bash
+# Threshold
+cast call 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 'getThreshold()(uint256)' --rpc-url $RPC
+# → expect: 3
+# Owners (compare to ADMIN Safe owners from Step 7)
+cast call 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 'getOwners()(address[])' --rpc-url $RPC
+# → expect: 6 EOAs — 5 overlap with ADMIN Safe at step 7
+# No Safe Guard active
+cast storage 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 0x4a204f620c8c5ccdca3fd54d003badd85ba500436a431f0cbda4f558c93c34c8 --rpc-url $RPC
+# → expect: 0x0000…0000
+```
+
+**Next:** Step 7 (ADMIN Safe (4-of-6, AccessManager role 0))
+
+### Step 7 — ADMIN Safe (4-of-6, AccessManager role 0)
+
+Address: [`0xabdd…5e96`](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96)
+
+*Why*: Top of the tree. Role 0 can grant/revoke any role, rewrite target↔role mappings, and upgrade the two CR oracle feeds INSTANTLY (their target admin delay is 0). Losing 4 keys here = total compromise.
+
+```bash
+# Threshold
+cast call 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 'getThreshold()(uint256)' --rpc-url $RPC
+# → expect: 4
+# Owners
+cast call 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 'getOwners()(address[])' --rpc-url $RPC
+# → expect: 6 EOAs (5 overlap with MAINTAINER Safe)
+# Confirm ADMIN holds role 0
+cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'hasRole(uint64,address)(bool,uint32)' 0 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 --rpc-url $RPC
+# → expect: (true, 0)  # bool=true, execDelay=0
+# No Safe modules
+cast call 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 'getModulesPaginated(address,uint256)(address[],address)' 0x0000000000000000000000000000000000000001 100 --rpc-url $RPC
+# → expect: ([], 0x0000…0001)
+```
+
+**Next:** Step 8 (Apyx Capped CR oracle (Morpho BASE_FEED_2, AccessManager target))
+
+### Step 8 — Apyx Capped CR oracle (Morpho BASE_FEED_2, AccessManager target)
+
+Address: [`0x2037…23b4`](https://etherscan.io/address/0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4)
+
+*Why*: The CR feed is the oracle input to Morpho's PT-apxUSD market oracle. Target admin delay is 0 and no function roles are set, so every selector falls through to role 0 (ADMIN) with zero delay — a 4/6 ADMIN tx can replace this impl in one transaction and reprice the collateral.
+
+```bash
+# Target admin delay on the capped CR feed
+cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getTargetAdminDelay(address)(uint32)' 0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4 --rpc-url $RPC
+# → expect: 0 (INSTANT)
+# Confirm ADMIN Safe can upgrade the CR feed with zero delay
+cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'canCall(address,address,bytes4)(bool,uint32)' 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4 0x4f1ef286 --rpc-url $RPC
+# → expect: (true, 0)
+# Check feed staleness — read updatedAt
+cast call 0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4 'latestRoundData()(uint80,int256,uint256,uint256,uint80)' --rpc-url $RPC
+# → expect: updatedAt ≈ 1774192391 (~30 days stale at the time of writing)
+```
+
+**Next:** Step 9 (Apyx Raw CR oracle (feeds the capped oracle))
+
+### Step 9 — Apyx Raw CR oracle (feeds the capped oracle)
+
+Address: [`0x8232…D305`](https://etherscan.io/address/0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305)
+
+*Why*: Upstream of step 8. Same AccessManager, same zero target admin delay — same 4/6 ADMIN instant-upgrade hazard. A compromise here propagates into the capped feed and then into Morpho's oracle.
+
+```bash
+# Target admin delay on the raw CR feed
+cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getTargetAdminDelay(address)(uint32)' 0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305 --rpc-url $RPC
+# → expect: 0 (INSTANT)
+# updatedAt on raw CR feed
+cast call 0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305 'latestRoundData()(uint80,int256,uint256,uint256,uint80)' --rpc-url $RPC
+# → expect: updatedAt ≈ 1774192391 — same stale window
+```
+
+**End of branch.**
+
 ## Per-criterion scores
 
 | Criterion | Weight | Score | Confidence |
