@@ -1,8 +1,8 @@
 ---
 title: PT-apxUSD
-score: 3.0
-verdict: "technically exists, regrettably"
-redFlags: ['FLAG_NO_TIMELOCK_ON_CRITICAL_OPS', 'FLAG_NO_TIMELOCK_ON_CRITICAL_OPS']
+score: 5.5
+verdict: "fine, I guess, sigh"
+redFlags: []
 date: 2026-04-21
 ---
 
@@ -17,32 +17,52 @@ date: 2026-04-21
   <!-- needle, rotates around center (200, 200) -->
   <line x1="200" y1="200" x2="200" y2="60"
         stroke="#111" stroke-width="4" stroke-linecap="round"
-        transform="rotate(-36.0, 200, 200)"/>
+        transform="rotate(9.0, 200, 200)"/>
   <circle cx="200" cy="200" r="8" fill="#111"/>
   <!-- score label -->
-  <text x="200" y="190" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="#111">3.0</text>
+  <text x="200" y="190" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="#111">5.5</text>
 </svg></div>
-  <div class="meme"><img src="/assets/score-3.png" alt="score 3 meme"/></div>
+  <div class="meme"><img src="/assets/score-6.png" alt="score 6 meme"/></div>
 </div>
 
-<p class="verdict-tagline"><em>technically exists, regrettably</em></p>
-
-## ⚠ Red flags raised
-
-- **[FLAG_NO_TIMELOCK_ON_CRITICAL_OPS]** (governance-security) — AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824.canCall(0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96, 0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4, 0x4f1ef286) returns (true, 0): the 4-of-6 ADMIN Safe can upgradeToAndCall the Apyx Capped CR feed (part of the Morpho oracle stack for PT-apxUSD) with ZERO timelock. Same result for the uncapped CR feed at 0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305.
-- **[FLAG_NO_TIMELOCK_ON_CRITICAL_OPS]** (governance-security) — AccessManager.getTargetAdminDelay(0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4) = 0 and getTargetAdminDelay(0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305) = 0. No function-role mappings have ever been set on either CR feed so every selector defaults to role 0 (ADMIN) with 0-second execution delay. A malicious upgrade of the CR oracle can be executed in a single 4-of-6 Safe tx, with no advance-warning window for Fira's liquidator bot or users to unwind.
-
-  Hard-caps final score at 3.0 (weighted would have been 5.5).
+<p class="verdict-tagline"><em>fine, I guess, sigh</em></p>
 
 ## Judge's verdict
 
-PT-apxUSD arrives with a clean team sheet — fully-doxxed ex-Kraken leadership (Onorati, Kang, Reid, Humiston), NASDAQ-listed DFDV sponsor, BitGo qualified custody, PCAOB monthly attestations, three named audits (Quantstamp, Certora, Zellic), all five core Apyx contracts verified on Etherscan, and cross-chain via Chainlink CCIP with RMN enabled. The single thing that drags the weighted 5.5 down to a capped 3.0 is a narrow, fixable governance misconfiguration on the Apyx Capped CR feed that sits under Morpho's oracle: `getTargetAdminDelay` is zero on both CR feeds with no function-role mappings set, which means the 4-of-6 ADMIN Safe can `upgradeToAndCall` the UUPS proxy in a single transaction with no warning window. This is not systemic rot — it is one unbound admin-delay config on one contract that Apyx ships today and can fix in an afternoon by binding a non-zero delay and publishing the function-role mapping.
+### ✅ What looks good
 
-The second-order concerns are real but do not change the shape of the call. The structural template — yield-bearing stablecoin wrapped into a Pendle PT and looped through Morpho/Fira — is the same composability stack that vaporised in the Nov 2025 xUSD/Stream Finance event, and that pattern matters even with better mitigants: when the PT layer is forced to unwind, the path back to USDC must survive both apxUSD peg stress and PT discount widening simultaneously. The mitigants here are meaningfully stronger than Stream — backing is public-equity dividend flow sitting in BitGo custody with monthly PCAOB attestations rather than opaque fund-manager positions — but they mitigate, not eliminate. Compounding this, the Apyx CR feed has been stale 25-30 days with no on-chain heartbeat, so upgrade-risk and observability-risk stack on the same single point of failure. Liquidity is adequate at the proposed cap (Curve NG + Uni v4 ~$34M TVL absorbs a max dump at 0.15-0.42% slippage), but aggregators (Paraswap, Odos) do not route PT as input, so the fixed-rate liquidator must ship a bespoke 3-hop PT→SY→apxUSD→USDC path pre-expiry and lean on 1:1 factory redemption post-expiry. The economic question — whether STRC/SATA dividend flow actually sustains the apxUSD yield — is explicitly out of scope here; see the "Where does yield come from?" section for the flow and note that economic risk is Markov Labs' responsibility, not this report's.
+- Fully-doxxed, high-reputation team: ex-Kraken ops (Onorati/Kang/Reid/Humiston) with NASDAQ-listed DFDV as sponsor — strong transparency signal (team-transparency 8.0).
+- Custody + attestation stack is institutional-grade: BitGo qualified custodian plus PCAOB-audited monthly reserve attestations — rare in DeFi stables.
+- All 5 core Apyx contracts verified on Etherscan (apxUSD, CR capped+raw, AccessManager, impls) and audit bar met: Quantstamp, Certora, Zellic all 2026.
+- Cross-chain surface is small and safe-by-construction: Chainlink CCIP with RMN enabled, limited to Ethereum + Base (cross-chain 8.0).
+- Pendle PT layer is standard V2 code — engineering risk concentrates on the apxUSD collateral layer, not the wrapper.
+- apxUSD minting is not unbounded EOA: MinterV0 enforces 10M/day cap gated by 3/6 Safe + 4h delay.
+- Liquidity plumbing adequate at proposed cap: Curve NG + Uni v4 ≈ $34M combined TVL, max-dump slippage 0.15–0.42%.
 
-Three concrete Apyx-side changes move this from capped-3.0 back toward the uncapped 5.5. (1) Bind a non-zero `adminDelay` on both CR feed proxies and set function-role mappings so `upgradeToAndCall` has a real timelock window — this single change lifts the red-flag cap. (2) Stand up an on-chain heartbeat / staleness guard on the CR feed so the 25-30 day gap becomes observable in-protocol rather than solely off-chain. (3) Publish the three audit PDFs and open a public bounty (Immunefi or Cantina) to close the remaining code-quality gap. On the Fira side, Hexagate must run an off-chain apxUSD divergence monitor and the fixed-rate liquidator must have the bespoke PT→SY→apxUSD→USDC route fork-tested before the cap opens past $1M. With (1) landed, a conservative-cap launch fits. Without (1), the 4-of-6 instant-upgrade surface sits directly under borrower collateral, and that is not a risk to accept at a $3M cap.
+### ⚠ What worries me
 
-**Verdict:** borderline — needs governance review
+- Governance (3.0): 4/6 ADMIN Safe can `upgradeToAndCall` CR feeds with ZERO timelock — no function-role mappings, `getTargetAdminDelay=0`. Biggest single fixable issue.
+- CR oracle feeds are stale ~30 days with no on-chain heartbeat and no operator role bound — Fira's Apyx oracle-DD concern, still unaddressed.
+- ADMIN (4/6) and MAINTAINER-LONG (3/6) Safes share 5-of-6 signer keys — separation of duties is nominal, not real.
+- Structural echo of Nov 2025 xUSD/Stream collapse (yield-stable → Pendle PT → Morpho loop); BitGo custody + public-equity sponsor mitigate, but pattern recently failed at scale.
+- apxUSD `pause()` is instant at 3/6 quorum → direct DoS lever on Fira liquidation flow if Apyx pauses mid-liquidation.
+- AccessManager self-admin delay = 0; ADMIN can re-route role mappings on any zero-delay target in a single tx.
+- No public bug-bounty program (Immunefi/Cantina) — pulls code-quality down despite 3 audits.
+- Aggregators (Paraswap, Odos) do not route PT-apxUSD as input — liquidator needs a bespoke 3-hop PT→SY→apxUSD→USDC path pre-expiry.
+
+### 🔧 What would lift the score
+
+- Bind non-zero `adminDelay` on both CR feed proxies and add function-role mappings for `upgradeToAndCall` so upgrades have a real timelock window.
+- Ship an on-chain heartbeat / staleness guard on the CR feeds with a bounded staleness window, plus a dedicated operator role.
+- Raise ADMIN Safe threshold and reduce signer overlap with MAINTAINER-LONG so the two Safes are not effectively the same key set.
+- Publish the three audit PDFs (Quantstamp / Certora / Zellic) and open a public bug bounty on Immunefi or Cantina.
+- Fira-side pre-req: Hexagate off-chain apxUSD-peg divergence monitor + fork-tested bespoke liquidator path before size scales up.
+
+### 🎯 Verdict
+
+**Verdict:** borderline — ship with caveats, conditional listing only after governance + oracle mitigations land
+
+Rationale one-liner: Score 5.5 reflects strong team/custody/liquidity against real governance gaps (zero-delay CR upgrades, stale feeds, Safe overlap); listable conservatively once timelock + heartbeat are fixed.
 
 
 ## Per-criterion scores
@@ -60,31 +80,6 @@ Three concrete Apyx-side changes move this from capped-3.0 back toward the uncap
 ## Detailed findings
 
 ### Governance & Security  (score 3, confidence 0.88)
-
-- **[INFO]** Multisig & privileged role inventory (mandatory table)
-  All role assignments and delays verified on-chain via AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 (hasRole, getAccess, getTargetFunctionRole, getTargetAdminDelay). Threshold/owners pulled directly from each Safe via getThreshold()/getOwners(). "Exec delay" is the per-member executionDelay from AccessManager.getAccess; "target admin delay" is the delay enforced on setTargetFunctionRole / setTargetAdminDelay against that target. For a scheduled-then-executed operation the effective wait is max(execDelay, targetAdminDelay).
-
-```markdown
-| Role | Address | Type | Threshold | Controls |
-|------|---------|------|-----------|----------|
-| ADMIN Safe (AccessManager role 0) | 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 | Gnosis Safe 4/6 | 4/6 (0 exec delay, 0 target admin delay on CR feeds, 3d on apxUSD) | AccessManager self-admin (grant/revoke any role, setTargetFunctionRole, setTargetAdminDelay); upgradeToAndCall on CR capped 0x2037a5Eb... and CR raw 0x8232... (INSTANT); mint(address,uint256) authority on apxUSD (selector 0x40c10f19 → role 0) |
-| MAINTAINER-LONG Safe (role 2 + 21 + 22 + 23 + 24 + 25) | 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 | Gnosis Safe 3/6 | 3/6 | role 2 general maintainer ops; role 21 MAINTAINER_INSTANT (0 delay) → apxUSD pause() 0x8456cb59; role 22 MAINTAINER_SHORT (14400s=4h) → apxUSD unpause() 0x3f4ba83a; role 23 MAINTAINER_MEDIUM (86400s=1d); role 24 MAINTAINER_LONG (259200s=3d) → apxUSD upgradeToAndCall 0x4f1ef286; role 25 MAINTAINER_MAXIMUM (604800s=7d) |
-| GUARDIAN role 31 holders | 7 EOAs incl. 0xb51F89DEA7Df709cEbb4809B40c6431361e61d0d, 0xcFCF3C9Ed3d97DB54c99BDd197E59952a0973f6e, 0xB98cD8C868cf00cEA934977dBE4AC090E808fb87, 0x5db416BcFc1a8b5b921f55C1E078d1F39194e99F, 0xd66a0Fc924fAb7476D35aFe5941856ef76BA0839, 0xD6bB3f9718D4f30ed2851c713275dEf7529D1411, plus 1 additional granted in tx block 0x17b182f | AccessManager role 31 members (EOAs) | 1-of-any (each EOA acts independently) | cancel() scheduled operations of supervised roles via AccessManager; roleGrantDelay=0 → ADMIN can add new guardians instantly |
-| apxUSD proxy admin authority | 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 (AccessManager itself) | AccessManager (OZ AccessManagedUpgradeable) | Target admin delay = 259200s (3d) | Acts as proxyAdmin for UUPS proxy 0x98A878b1Cd98131B271883B390f68D2c90674665; upgradeToAndCall routed to role 24 (MAINTAINER_LONG = 0xf986...) |
-| CR capped feed authority | 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 | AccessManager | Target admin delay = 0 (INSTANT) | UUPS proxy 0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4 (Morpho PT-apxUSD oracle BASE_FEED_2); all selectors default to ADMIN role 0 → 4/6 Safe can swap impl in one tx |
-| CR raw feed authority | 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 | AccessManager | Target admin delay = 0 (INSTANT) | UUPS proxy 0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305 (source for capped feed); same 4/6 instant-upgrade surface |
-| apxUSD mint controller (role 0 default) | 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 | Gnosis Safe 4/6 (via AccessManager role 0, no custom role assigned) | 4/6 (0 exec delay) | mint(address,uint256) on apxUSD falls through to default role 0 since no ROLE_MINT_STRAT (role 1) has been assigned on this selector — verified via getTargetFunctionRole = 0. Effective mint cap = unlimited |
-| Role 1 ROLE_MINT_STRAT holders | NONE granted on-chain | AccessManager role 1 | n/a | Despite RoleLabel event, no addresses hold role 1; mint selector therefore falls through to role 0 ADMIN. Documentation drift from docs.apyx.fi |
-| Role 8 ROLE_REDEEMER holders | Not held by either Safe per hasRole probe | AccessManager role 8 | n/a | Redemption gating — not exercised in current deployment |
-| Safe Modules on ADMIN + MAINTAINER | None (getModulesPaginated = []) | — | — | No Zodiac / Roles Modifier / Delay module. No module attack surface, but also no automated policy enforcement |
-| Safe Guards on ADMIN + MAINTAINER | None (guard storage slot = 0x00) | — | — | No transaction-level guard; no pre/post-exec hooks |
-| apxUSD implementation | 0xDd71Fd677fde2ed2579a3c45204f41a11016ccB4 | Logic contract (non-proxy) | n/a | Runtime bytecode executed by proxy 0x98A8...; swappable by role 24 with 3d delay |
-| CCIP admin | Not applicable | — | — | apxUSD has no CCIPAdmin / TokenAdminRegistry binding on mainnet as of 2026-04-21 |
-```
-
-Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instantly upgrade either CR feed implementation, (b) mint unlimited apxUSD, (c) reconfigure AccessManager itself (self-admin delay 0). An attacker with 3 of 6 MAINTAINER signers can (a) pause apxUSD instantly (denial-of-service to Fira liquidators), (b) schedule apxUSD upgrade with 3-day warning, (c) unpause with 4h delay. The two Safes share 5 of 6 owners (0xb51F, 0xD6bB, 0xcFCF, 0xB98c, 0x5db4, 0xd66a overlap; maintainer differs only in the 0x0442... addition visible in role 31 grants), so "separation of duties" is nominal.
-
-  *Evidence:* AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 — hasRole/getAccess/getTargetFunctionRole/getTargetAdminDelay; Safe 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 getThreshold=4, getOwners=[0xb51F...,0xD6bB...,0xcFCF...,0xB98c...,0x5db4...,0xd66a...]; Safe 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 getThreshold=3, getOwners overlap 5/6; apxUSD proxy 0x98A878b1Cd98131B271883B390f68D2c90674665 impl=0xDd71Fd67...; CR capped 0x2037a5Eb..., CR raw 0x8232... both AccessManaged
 
 - **[CRITICAL]** 4-of-6 ADMIN Safe can swap CR oracle implementation instantly (no timelock)
   Both CR feeds are UUPS proxies managed by the AccessManager with `getTargetAdminDelay = 0` and no function-role mappings, so every selector defaults to role 0 (ADMIN) with 0-second execution delay. A hostile 4-of-6 quorum on ADMIN can `upgradeToAndCall` either feed in a single transaction, letting them inflate or zero the apxUSD price feed before Hexagate monitors or the Fira liquidator bot can react. This is the red-flag anchor — everything else below is contributing context.
@@ -273,6 +268,31 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
   - ADMIN Safe `0xabdd…5e96` — [etherscan](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96)
   - MAINTAINER Safe `0xf986…3ce2` — [etherscan](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663ce2)
 
+- **[INFO]** Multisig & privileged role inventory (mandatory table)
+
+All role assignments and delays verified on-chain via AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 (hasRole, getAccess, getTargetFunctionRole, getTargetAdminDelay). Threshold/owners pulled directly from each Safe via getThreshold()/getOwners(). "Exec delay" is the per-member executionDelay from AccessManager.getAccess; "target admin delay" is the delay enforced on setTargetFunctionRole / setTargetAdminDelay against that target. For a scheduled-then-executed operation the effective wait is max(execDelay, targetAdminDelay).
+
+| Role | Address | Type | Threshold | Controls |
+|------|---------|------|-----------|----------|
+| ADMIN Safe (AccessManager role 0) | 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 | Gnosis Safe 4/6 | 4/6 (0 exec delay, 0 target admin delay on CR feeds, 3d on apxUSD) | AccessManager self-admin (grant/revoke any role, setTargetFunctionRole, setTargetAdminDelay); upgradeToAndCall on CR capped 0x2037a5Eb... and CR raw 0x8232... (INSTANT); mint(address,uint256) authority on apxUSD (selector 0x40c10f19 → role 0) |
+| MAINTAINER-LONG Safe (role 2 + 21 + 22 + 23 + 24 + 25) | 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 | Gnosis Safe 3/6 | 3/6 | role 2 general maintainer ops; role 21 MAINTAINER_INSTANT (0 delay) → apxUSD pause() 0x8456cb59; role 22 MAINTAINER_SHORT (14400s=4h) → apxUSD unpause() 0x3f4ba83a; role 23 MAINTAINER_MEDIUM (86400s=1d); role 24 MAINTAINER_LONG (259200s=3d) → apxUSD upgradeToAndCall 0x4f1ef286; role 25 MAINTAINER_MAXIMUM (604800s=7d) |
+| GUARDIAN role 31 holders | 7 EOAs incl. 0xb51F89DEA7Df709cEbb4809B40c6431361e61d0d, 0xcFCF3C9Ed3d97DB54c99BDd197E59952a0973f6e, 0xB98cD8C868cf00cEA934977dBE4AC090E808fb87, 0x5db416BcFc1a8b5b921f55C1E078d1F39194e99F, 0xd66a0Fc924fAb7476D35aFe5941856ef76BA0839, 0xD6bB3f9718D4f30ed2851c713275dEf7529D1411, plus 1 additional granted in tx block 0x17b182f | AccessManager role 31 members (EOAs) | 1-of-any (each EOA acts independently) | cancel() scheduled operations of supervised roles via AccessManager; roleGrantDelay=0 → ADMIN can add new guardians instantly |
+| apxUSD proxy admin authority | 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 (AccessManager itself) | AccessManager (OZ AccessManagedUpgradeable) | Target admin delay = 259200s (3d) | Acts as proxyAdmin for UUPS proxy 0x98A878b1Cd98131B271883B390f68D2c90674665; upgradeToAndCall routed to role 24 (MAINTAINER_LONG = 0xf986...) |
+| CR capped feed authority | 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 | AccessManager | Target admin delay = 0 (INSTANT) | UUPS proxy 0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4 (Morpho PT-apxUSD oracle BASE_FEED_2); all selectors default to ADMIN role 0 → 4/6 Safe can swap impl in one tx |
+| CR raw feed authority | 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 | AccessManager | Target admin delay = 0 (INSTANT) | UUPS proxy 0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305 (source for capped feed); same 4/6 instant-upgrade surface |
+| apxUSD mint controller (role 0 default) | 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 | Gnosis Safe 4/6 (via AccessManager role 0, no custom role assigned) | 4/6 (0 exec delay) | mint(address,uint256) on apxUSD falls through to default role 0 since no ROLE_MINT_STRAT (role 1) has been assigned on this selector — verified via getTargetFunctionRole = 0. Effective mint cap = unlimited |
+| Role 1 ROLE_MINT_STRAT holders | NONE granted on-chain | AccessManager role 1 | n/a | Despite RoleLabel event, no addresses hold role 1; mint selector therefore falls through to role 0 ADMIN. Documentation drift from docs.apyx.fi |
+| Role 8 ROLE_REDEEMER holders | Not held by either Safe per hasRole probe | AccessManager role 8 | n/a | Redemption gating — not exercised in current deployment |
+| Safe Modules on ADMIN + MAINTAINER | None (getModulesPaginated = []) | — | — | No Zodiac / Roles Modifier / Delay module. No module attack surface, but also no automated policy enforcement |
+| Safe Guards on ADMIN + MAINTAINER | None (guard storage slot = 0x00) | — | — | No transaction-level guard; no pre/post-exec hooks |
+| apxUSD implementation | 0xDd71Fd677fde2ed2579a3c45204f41a11016ccB4 | Logic contract (non-proxy) | n/a | Runtime bytecode executed by proxy 0x98A8...; swappable by role 24 with 3d delay |
+| CCIP admin | Not applicable | — | — | apxUSD has no CCIPAdmin / TokenAdminRegistry binding on mainnet as of 2026-04-21 |
+
+Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instantly upgrade either CR feed implementation, (b) mint unlimited apxUSD, (c) reconfigure AccessManager itself (self-admin delay 0). An attacker with 3 of 6 MAINTAINER signers can (a) pause apxUSD instantly (denial-of-service to Fira liquidators), (b) schedule apxUSD upgrade with 3-day warning, (c) unpause with 4h delay. The two Safes share 5 of 6 owners (0xb51F, 0xD6bB, 0xcFCF, 0xB98c, 0x5db4, 0xd66a overlap; maintainer differs only in the 0x0442... addition visible in role 31 grants), so "separation of duties" is nominal.
+
+
+  *Evidence:* AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 — hasRole/getAccess/getTargetFunctionRole/getTargetAdminDelay; Safe 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 getThreshold=4, getOwners=[0xb51F...,0xD6bB...,0xcFCF...,0xB98c...,0x5db4...,0xd66a...]; Safe 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 getThreshold=3, getOwners overlap 5/6; apxUSD proxy 0x98A878b1Cd98131B271883B390f68D2c90674665 impl=0xDd71Fd67...; CR capped 0x2037a5Eb..., CR raw 0x8232... both AccessManaged
+
 - **[INFO]** Role labels + delay posture (reference)
   Roles by ID (from RoleLabel events): 0=ADMIN, 1=ROLE_MINT_STRAT (no holders), 2=MINTER_CONTRACT_4HR, 3=ROLE_MINT_GUARD, 4=MINTER_CONTRACT_4HR, 6=ROLE_YIELD_DISTRIBUTOR, 7=YIELD_OPERATOR, 8=ROLE_REDEEMER, 21=MAINTAINER_INSTANT, 22=MAINTAINER_SHORT, 23=MAINTAINER_MEDIUM, 24=MAINTAINER_LONG, 25=MAINTAINER_MAXIMUM, 31=GUARDIAN. Grant delays: role 0=7d, roles 1/2/4/8=3d, roles 6/7=1d, roles 21-25=7d, role 31=0. Target admin delays: apxUSD=3d, CR feeds=0d, AccessManager=0d. minSetback=5d.
 
@@ -285,10 +305,6 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
 
 
 ### Asset Controls  (score 6, confidence 0.85)
-
-- **[INFO]** AccessManager ADMIN_ROLE (role 0) currently held by 4-of-6 Safe, not an EOA
-  Verified live via hasRole(0, 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96) => (true, 0). The Safe at 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 has threshold 4 and 6 signers (verified via getThreshold()/getOwners()). ADMIN was transferred from the genesis deployer EOA 0x0442cC5BBfBc4B7Dc3A14F9766c21C82b45f0024 (confirmed hasRole(0, EOA) => (false, 0)) and also from the 3/6 ops Safe 0xf9862EfC1704aC05e687f66E5cD8c130E5663cE2 (confirmed hasRole(0, f9862) => (false, 0)). Admin ownership move to the 4/6 Safe occurred at block 24721241 (timestamp 1772908091 ~ 2026-03-04). ADMIN has 0 execution delay but role 0 grant delay is 7 days, so adding a new admin takes 7 days.
-  *Evidence:* AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 | Safe 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 (4/6) | grant tx 0x8b6b1a3a2e7900bd0b5f1d49a1d6fe840cedb4b2af26da7147eb52ca3e5af417 block 24721241
 
 - **[MEDIUM]** apxUSD.mint gated by MinterV0 contract (role 4) with 10M/day rate limit, 4h exec delay, and signed orders
   apxUSD.mint(address,uint256,uint256) selector 0x156e29f6 is gated by role 4 (verified via raw call getTargetFunctionRole @ 0x6d5115bd). Role 4 is held solely by the MinterV0 mint-strategy contract at 0x2c36e1adFaA80ee0324B04cC814F5207Bb7Ba76e with a 14400s (4h) execution delay. Role 4 grant delay is 259200s (3 days). MinterV0 enforces: max 10,000,000 apxUSD per tx, rate limit 10,000,000 apxUSD per 86,400s (1 day), supply cap 300,000,000 apxUSD (live read supplyCap() = 3e26). Current totalSupply() = 1.8e26 (~180M). MinterV0 requires EIP-712 signed orders; requestMint (selector 0xeecd570d) and executeMint (0x14d39415) on MinterV0 are gated by role 2 (MINTER_CONTRACT), held by the 3-of-6 Safe 0xf9862EfC1704aC05e687f66E5cD8c130E5663cE2 with 0 exec delay. Effective minting bar: 3 of 6 Safe signers sign an EIP-712 order -> MinterV0 validates + enforces 10M/day + 10M/tx + cap -> tokens minted after 4h role-4 execution delay. Layered and capped, but the human bar is 3/6 (50%) which is at the low end for a dollar-stable with $180M live supply.
@@ -310,6 +326,10 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
   setCCIPAdmin(address) selector 0xa8fa343c and setAuthority(address) selector 0x7a9e5e4b are both gated by role 25, held by Safe 0xf9862... (3/6) with 604800s (7 day) execution delay. setAuthority is the most sensitive function — it can replace the entire AccessManager; 7-day delay is appropriate. setCCIPAdmin controls the CCIP token admin (Chainlink cross-chain adapter) — 7-day delay also reasonable. Signer threshold is still 3/6 across all operational roles.
   *Evidence:* TargetFunctionRoleUpdated(apxUSD, 0xa8fa343c, 25) and (apxUSD, 0x7a9e5e4b, 25) block 24828844 logIndex 243/244 | RoleGranted(25, 0xf9862, delay=604800) block 24792767
 
+- **[INFO]** AccessManager ADMIN_ROLE (role 0) currently held by 4-of-6 Safe, not an EOA
+  Verified live via hasRole(0, 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96) => (true, 0). The Safe at 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 has threshold 4 and 6 signers (verified via getThreshold()/getOwners()). ADMIN was transferred from the genesis deployer EOA 0x0442cC5BBfBc4B7Dc3A14F9766c21C82b45f0024 (confirmed hasRole(0, EOA) => (false, 0)) and also from the 3/6 ops Safe 0xf9862EfC1704aC05e687f66E5cD8c130E5663cE2 (confirmed hasRole(0, f9862) => (false, 0)). Admin ownership move to the 4/6 Safe occurred at block 24721241 (timestamp 1772908091 ~ 2026-03-04). ADMIN has 0 execution delay but role 0 grant delay is 7 days, so adding a new admin takes 7 days.
+  *Evidence:* AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 | Safe 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 (4/6) | grant tx 0x8b6b1a3a2e7900bd0b5f1d49a1d6fe840cedb4b2af26da7147eb52ca3e5af417 block 24721241
+
 - **[INFO]** Role taxonomy: labeled vs unlabeled roles
   AccessManager RoleLabel events emitted at deployment (block 24481041-24481052) cover: role 1=ROLE_MINT_STRAT, role 2=ROLE_MINTER (MINTER_CONTRACT), role 3=ROLE_MINT_GUARD, role 6=ROLE_YIELD_DISTRIBUTOR, role 7=ROLE_YIELD_OPERATOR, role 8=ROLE_REDEEMER. Roles 4, 21-25 that currently gate apxUSD's critical functions were NOT emitted with RoleLabel events — they were introduced in later setTargetFunctionRole batches (block 24734715 for MinterV0 wiring, 24828844 for apxUSD ops, 24849935 for the mint-role swap from role 1 to role 4). Unlabeled roles are a documentation gap: UIs, monitoring, and third-party risk systems that rely on role labels will miss the real gating. Role 31 was also assigned to MinterV0.cancelMint in a later batch.
   *Evidence:* RoleLabel events (topic 0x1256f5b5ecb89caec12db449738f2fbcd1ba5806cf38f35413f4e5c15bf6a450) block 24481041-24481052 on AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824
@@ -325,6 +345,9 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
 
 ### Code Quality  (score 7, confidence 0.65)
 
+- **[MEDIUM]** No public bug bounty program
+  No Immunefi / HackerOne / security@ contact surfaced in docs or README. Moderate score reduction — live stablecoin infrastructure of this size typically runs an Immunefi program. Not a red flag.
+
 - **[INFO]** All 5 Apyx core contracts verified on Etherscan (Exact Match)
   apxUSD (0x98A8...4665), CR capped proxy (0x2037...f23b4) + impl (0xbcc4...d682 ApyxRedemptionOracle), CR raw proxy (0x8232...FD305) + impl (0x0e1e...c49c ApyxCollateralRatioOracle), AccessManager (0xe167...2824). Solc 0.8.30, optimizer 200, Prague EVM. No FLAG_UNVERIFIED_CORE_CONTRACT.
   *Evidence:* https://etherscan.io/address/0x98A878b1Cd98131B271883B390f68D2c90674665#code
@@ -332,9 +355,6 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
 - **[INFO]** Three audits listed at docs.apyx.fi/resources/audits — Quantstamp, Certora, Zellic
   Quantstamp (Feb 2026), Certora (Mar 2026), Zellic (Mar 2026). All three are top-tier firms (Certora = formal verification). Meets the 2+ audit bar. Individual PDFs not publicly retrievable at assessment time — findings/remediation status cannot be independently validated, but the audits exist.
   *Evidence:* https://docs.apyx.fi/resources/audits
-
-- **[MEDIUM]** No public bug bounty program
-  No Immunefi / HackerOne / security@ contact surfaced in docs or README. Moderate score reduction — live stablecoin infrastructure of this size typically runs an Immunefi program. Not a red flag.
 
 - **[INFO]** Active repo with Foundry + Slither + invariant tests
   apyx-labs/evm-contracts: Foundry + Soldeer, Slither static analysis in CI, invariant/ test subdir (runs=256 depth=1024). OpenZeppelin Contracts v5.5.0 (current). Modern, standard patterns.
@@ -460,10 +480,6 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
 
 ### Controversy  (score 5, confidence 0.75)
 
-- **[INFO]** Where does yield come from?
-  apxUSD is the first 'Dividend-Backed Stablecoin' — backed by preferred equity of BTC treasury companies: STRC (Strategy / MSTR, ~11.5% annual dividend) and SATA (Strive / ASST, ~12.75-13%). Yield flow: dividend cash from issuers → BitGo qualified custody → Apyx operator keys → MinterV0 contract mints apxUSD/ApyUSD → on-chain CR oracle reflects NAV. Reserve attestations are offchain, monthly, PCAOB-registered (not real-time). Commentators have drawn Terra-Luna parallels on STRC's reflexivity (BTC crash → STRC dividend up → Strategy raises more debt / sells BTC → BTC down). **Informational only.** Economic viability of the yield source is Markov Labs' responsibility and is not scored in this assessment.
-  *Evidence:* https://docs.apyx.fi/product-overview/apxusd-overview ; https://cryptobriefing.com/apyx-strc-acquisition-largest-holding/
-
 - **[HIGH]** Structural similarity to Nov 2025 xUSD/Stream Finance collapse
   apxUSD occupies the same structural niche as Stream Finance's xUSD (collapsed Nov 4 2025): yield-backed stablecoin pushed as Pendle-PT'd collateral into Morpho-curated looped borrow strategies. Stream lost $93M on an 'external fund manager'; xUSD depegged 87-93% and cascaded to deUSD (-98%) with ~$285M+ bad debt across Morpho/Euler/Gearbox/Silo. Treated as a score-influencing pattern concern, not a red flag. Key differences vs Stream: Apyx custody is BitGo (qualified custodian) with PCAOB-registered monthly attestations, and backing is publicly-listed equity dividends rather than an off-chain fund-manager strategy. Mitigants exist, but the composability pattern (stablecoin → Pendle PT → Morpho loop) has demonstrably failed recently under stress.
   *Evidence:* https://blockeden.xyz/blog/2025/11/08/m-defi-contagion/
@@ -471,6 +487,10 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
 - **[MEDIUM]** CR oracle feed stale 25-30 days; no on-chain heartbeat
   Both CR feeds (capped 0x2037... and raw 0x8232...) show updatedAt ~25-30 days old. Apyx response (2026-04-16): 'updated as needed atm, will be daily in the future' — not enforced on-chain, no heartbeat, no fallback. Score-affecting concern; only escalates to red-flag severity in combination with governance-security's finding that the same feeds can be instantly re-implemented.
   *Evidence:* https://etherscan.io/address/0x2037a5eb67aa9b2fbf50042b724d8c4db80f23b4#readProxyContract
+
+- **[INFO]** Where does yield come from?
+  apxUSD is the first 'Dividend-Backed Stablecoin' — backed by preferred equity of BTC treasury companies: STRC (Strategy / MSTR, ~11.5% annual dividend) and SATA (Strive / ASST, ~12.75-13%). Yield flow: dividend cash from issuers → BitGo qualified custody → Apyx operator keys → MinterV0 contract mints apxUSD/ApyUSD → on-chain CR oracle reflects NAV. Reserve attestations are offchain, monthly, PCAOB-registered (not real-time). Commentators have drawn Terra-Luna parallels on STRC's reflexivity (BTC crash → STRC dividend up → Strategy raises more debt / sells BTC → BTC down). **Informational only.** Economic viability of the yield source is Markov Labs' responsibility and is not scored in this assessment.
+  *Evidence:* https://docs.apyx.fi/product-overview/apxusd-overview ; https://cryptobriefing.com/apyx-strc-acquisition-largest-holding/
 
 - **[INFO]** DFDV sponsor is the former Janover Inc. — $300M valuation on $3M raise
   Apyx's lead institutional backer is DeFi Development Corp (NASDAQ: DFDV), the former Janover Inc. which pivoted to Solana treasury in April 2025 after Blake Janover sold control for $4M. DFDV is <12 months into its crypto identity. Reported $300M valuation on $3M raise comes from this insider network rather than tier-1 crypto VCs. Noted for transparency; no score impact.
