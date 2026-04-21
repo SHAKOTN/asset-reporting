@@ -21,7 +21,7 @@ date: 2026-04-21
   <!-- Top classification strip -->
   <line x1="14" y1="52" x2="506" y2="52" stroke="currentColor" stroke-width="1" opacity="0.7"/>
   <text x="28" y="38" font-size="11" font-weight="600" letter-spacing="2.5" fill="currentColor" opacity="0.85">ASSET / PT-APXUSD</text>
-  <text x="492" y="38" text-anchor="end" font-size="11" font-weight="600" letter-spacing="2" fill="currentColor" opacity="0.85">DOS-9303</text>
+  <text x="492" y="38" text-anchor="end" font-size="11" font-weight="600" letter-spacing="2" fill="currentColor" opacity="0.85">DOS-0212</text>
 
   <!-- RISK SCORE label -->
   <text x="260" y="80" text-anchor="middle" font-size="10" font-weight="500" letter-spacing="6" fill="currentColor" opacity="0.65">— RISK SCORE —</text>
@@ -74,7 +74,6 @@ date: 2026-04-21
 
 - Governance (3.0): [4/6 ADMIN Safe](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96) can `upgradeToAndCall` the [capped CR feed](https://etherscan.io/address/0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4) with ZERO timelock — no function-role mappings, `getTargetAdminDelay = 0`. Biggest single fixable issue.
 - CR oracle feeds are stale ~30 days with no on-chain heartbeat — [capped feed updatedAt](https://etherscan.io/address/0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4#readProxyContract) ≈ 2026-03-22 at assessment.
-- [ADMIN Safe (4/6)](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96) and [MAINTAINER Safe (3/6)](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663ce2) share 5-of-6 signer keys — separation of duties is nominal, not real.
 - Structural echo of the [Nov 2025 xUSD/Stream collapse](https://blockeden.xyz/blog/2025/11/08/m-defi-contagion/) (yield-stable → Pendle PT → Morpho loop); BitGo custody + public-equity sponsor mitigate but the pattern recently failed at scale.
 - apxUSD `pause()` is instant at 3/6 quorum → direct DoS lever on Fira liquidation flow if the [MAINTAINER Safe](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663ce2) pauses mid-liquidation.
 - [AccessManager](https://etherscan.io/address/0xe167330E2Eac88666de253e9607C6d9ae0cA2824) self-admin delay = 0; ADMIN can re-route role mappings on zero-delay targets in one tx.
@@ -85,7 +84,7 @@ date: 2026-04-21
 
 **Verdict:** borderline — moderate risk, listable only at a conservative cap
 
-Rationale one-liner: Score 5.5 reflects strong team/custody/liquidity and standard Pendle wrapping against a zero-delay CR-oracle upgrade path, stale feeds, and 5/6 signer overlap between ADMIN and MAINTAINER Safes.
+Rationale one-liner: Score 5.5 reflects strong team/custody/liquidity and standard Pendle wrapping against a zero-delay CR-oracle upgrade path and stale feeds. Signer-overlap concern cleared 2026-04-21 — Apyx confirmed the 6 keys sit with 3 separate organizations + 1 core team member across 4 countries, with 2 orgs running larger treasuries elsewhere.
 
 
 ## Contracts & Multisigs
@@ -106,7 +105,7 @@ Canonical addresses for the protocol. Click any address to open it on the block 
 | Apyx Raw CR oracle | [`0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305`](https://etherscan.io/address/0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305) | UUPS proxy | Target admin delay = 0. Feeds capped oracle. |
 | Morpho PT-apxUSD oracle | [`0x4DFceF82eaEE9eA817bEb1279336F7D0Ebf2b685`](https://etherscan.io/address/0x4DFceF82eaEE9eA817bEb1279336F7D0Ebf2b685) | MorphoChainlinkOracleV2 | Consumes capped CR feed as BASE_FEED_2. |
 | ADMIN Safe (4/6) | [`0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96`](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96) | Gnosis Safe 4-of-6 | Holds AccessManager role 0. 0 exec delay. No Safe Guard/Modules. |
-| MAINTAINER-LONG Safe (3/6) | [`0xf9862efc1704ac05e687f66e5cd8c130e5663ce2`](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663ce2) | Gnosis Safe 3-of-6 | Roles 2/21/22/23/24/25. Shares 5-of-6 owners with ADMIN Safe. |
+| MAINTAINER-LONG Safe (3/6) | [`0xf9862efc1704ac05e687f66e5cd8c130e5663ce2`](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663ce2) | Gnosis Safe 3-of-6 | Roles 2/21/22/23/24/25. 5-of-6 owner overlap with ADMIN Safe; keys distributed across 3 orgs + core team in 4 countries (per Apyx 2026-04-21). |
 
 ## Access-control walk
 
@@ -403,30 +402,6 @@ cast storage 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 0x4a204f62c4808f4b5ce0aa
 
 - ADMIN Safe — [`0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96`](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96)
 
-#### <span class="sev-badge sev-high">[HIGH]</span> No effective separation of duties between ADMIN and MAINTAINER Safes {: .finding-header .finding-high }
-
-ADMIN (4/6) and MAINTAINER-LONG (3/6) share 5 of 6 signers. Apyx blog claims an upcoming split to a "separate master multi-sig" but on-chain the owner sets overlap. A single group of 4 compromised keys reaches either path (ADMIN needs 4, MAINTAINER needs 3).
-
-
-**Verify on-chain:**
-
-```bash
-# Owners of ADMIN vs MAINTAINER
-cast call 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 'getOwners()(address[])' --rpc-url $RPC
-# → expect: [0xb51F…, 0xD6bB…, 0xcFCF…, 0xB98c…, 0x5db4…, 0xd66a…]
-cast call 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 'getOwners()(address[])' --rpc-url $RPC
-# → expect: 5 of 6 overlap with ADMIN
-cast call 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 'getThreshold()(uint256)' --rpc-url $RPC
-# → expect: 3
-```
-
-
-**Key addresses:**
-
-- ADMIN Safe (4/6) — [`0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96`](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96)
-- MAINTAINER-LONG Safe (3/6) — [`0xf9862efc1704ac05e687f66e5cd8c130e5663ce2`](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663ce2)
-- Apyx blog claim
-
 #### <span class="sev-badge sev-medium">[MEDIUM]</span> apxUSD `upgradeToAndCall` gated by 3/6 MAINTAINER-LONG + 3-day exec delay {: .finding-header .finding-medium }
 
 apxUSD proxy upgrade requires role 24 (MAINTAINER_LONG, held by 3/6 Safe) and waits 259 200 s (3 days). 3-day window is on the short side for an upgradeable stablecoin but is enforced (unlike the CR feeds). Fira liquidators must monitor AccessManager `OperationScheduled` events and be ready to unwind within the 3-day window.
@@ -514,6 +489,30 @@ cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getRoleGrantDelay(uint64)(
 
 - AccessManager (self) — [`0xe167330E2Eac88666de253e9607C6d9ae0cA2824`](https://etherscan.io/address/0xe167330E2Eac88666de253e9607C6d9ae0cA2824)
 
+#### <span class="sev-badge sev-low">[LOW]</span> 5/6 signer overlap between ADMIN/MAINTAINER Safes; custody distributed across 3 orgs + core team in 4 countries {: .finding-header .finding-low }
+
+Raw on-chain count — ADMIN (4/6) and MAINTAINER-LONG (3/6) share 5 of 6 owner addresses. Apyx confirmed 2026-04-21 the 6 keys are held across 3 different organizations + 1 core team member in 4 different countries; 2 of those organizations manage larger treasuries separately from the apyx treasury. Effective quorum is materially stronger than the raw signer count suggests — not a meaningful separation-of-duties concern.
+
+
+**Verify on-chain:**
+
+```bash
+# Owners of ADMIN vs MAINTAINER
+cast call 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 'getOwners()(address[])' --rpc-url $RPC
+# → expect: [0xb51F…, 0xD6bB…, 0xcFCF…, 0xB98c…, 0x5db4…, 0xd66a…]
+cast call 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 'getOwners()(address[])' --rpc-url $RPC
+# → expect: 5 of 6 overlap with ADMIN
+cast call 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 'getThreshold()(uint256)' --rpc-url $RPC
+# → expect: 3
+```
+
+
+**Key addresses:**
+
+- ADMIN Safe (4/6) — [`0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96`](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96)
+- MAINTAINER-LONG Safe (3/6) — [`0xf9862efc1704ac05e687f66e5cd8c130e5663ce2`](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663ce2)
+- Apyx blog claim
+
 #### <span class="sev-badge sev-low">[LOW]</span> No Safe Modules and no Safe Guards on either Safe {: .finding-header .finding-low }
 
 Positive: no suspicious module surface (empty `getModulesPaginated`, zero guard storage slot on both Safes). Negative: no automated policy enforcement layer — any valid N-of-M execution goes through unconditionally.
@@ -554,7 +553,7 @@ All role assignments and delays verified on-chain via AccessManager 0xe167330E2E
 | apxUSD implementation | 0xDd71Fd677fde2ed2579a3c45204f41a11016ccB4 | Logic contract (non-proxy) | n/a | Runtime bytecode executed by proxy 0x98A8...; swappable by role 24 with 3d delay |
 | CCIP admin | Not applicable | — | — | apxUSD has no CCIPAdmin / TokenAdminRegistry binding on mainnet as of 2026-04-21 |
 
-Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instantly upgrade either CR feed implementation, (b) mint unlimited apxUSD, (c) reconfigure AccessManager itself (self-admin delay 0). An attacker with 3 of 6 MAINTAINER signers can (a) pause apxUSD instantly (denial-of-service to Fira liquidators), (b) schedule apxUSD upgrade with 3-day warning, (c) unpause with 4h delay. The two Safes share 5 of 6 owners (0xb51F, 0xD6bB, 0xcFCF, 0xB98c, 0x5db4, 0xd66a overlap; maintainer differs only in the 0x0442... addition visible in role 31 grants), so "separation of duties" is nominal.
+Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instantly upgrade either CR feed implementation, (b) mint unlimited apxUSD, (c) reconfigure AccessManager itself (self-admin delay 0). An attacker with 3 of 6 MAINTAINER signers can (a) pause apxUSD instantly (denial-of-service to Fira liquidators), (b) schedule apxUSD upgrade with 3-day warning, (c) unpause with 4h delay. The two Safes share 5 of 6 owners (0xb51F, 0xD6bB, 0xcFCF, 0xB98c, 0x5db4, 0xd66a overlap; maintainer differs only in the 0x0442... addition visible in role 31 grants). Apyx confirmed 2026-04-21 the 6 keys are held by 3 different organizations + 1 core team member, geographically spread across 4 countries, with 2 of those organizations running larger treasuries separately — so collusion across the shared owner set is materially harder than the raw 4/6 or 3/6 thresholds suggest.
 
 
 *Evidence:* AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 — hasRole/getAccess/getTargetFunctionRole/getTargetAdminDelay; Safe 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 getThreshold=4, getOwners=[0xb51F...,0xD6bB...,0xcFCF...,0xB98c...,0x5db4...,0xd66a...]; Safe 0xf9862efc1704ac05e687f66e5cd8c130e5663ce2 getThreshold=3, getOwners overlap 5/6; apxUSD proxy 0x98A878b1Cd98131B271883B390f68D2c90674665 impl=0xDd71Fd67...; CR capped 0x2037a5Eb..., CR raw 0x8232... both AccessManaged
@@ -568,9 +567,9 @@ Roles by ID (from RoleLabel events): 0=ADMIN, 1=ROLE_MINT_STRAT (no holders), 2=
 
 - AccessManager — [`0xe167330E2Eac88666de253e9607C6d9ae0cA2824`](https://etherscan.io/address/0xe167330E2Eac88666de253e9607C6d9ae0cA2824)
 
-#### <span class="sev-badge sev-info">[INFO]</span> Docs → on-chain drift on 'separate master multisig' {: .finding-header .finding-info }
+#### <span class="sev-badge sev-info">[INFO]</span> Custody disclosure — keys distributed across 3 organizations + core team (Apyx confirmed 2026-04-21) {: .finding-header .finding-info }
 
-Apyx blog post `blog.apyx.fi/minting-controls/` claims configuration authority will be transferred to a "separate master multi-sig". On-chain the two admin Safes share 5 of 6 owners, so the separation is nominal at best. docs.apyx.fi does not publish specific multisig addresses, thresholds, or timelock durations.
+Apyx blog post `blog.apyx.fi/minting-controls/` mentions a "separate master multi-sig" — on-chain the two admin Safes still share 5 of 6 owners. Apyx team confirmed directly on 2026-04-21 that the 6 keys are held by 3 different organizations + 1 core team member across 4 countries, with 2 of those organizations running larger treasuries separately from the apyx treasury. Addresses, thresholds, and timelock durations are not publicly documented but the key-distribution model is strong in practice.
 
 
 ### 🛡️ Asset Controls  ·  score 6 / confidence 0.85 {: .agent-section .agent-asset-controls }
