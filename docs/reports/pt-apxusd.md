@@ -7,32 +7,41 @@ date: 2026-04-21
 ---
 
 <div class="score-banner">
-  <div class="speedometer"><svg class="risk-speedometer" width="420" height="240" viewBox="0 0 420 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asset risk score 5.5 of 10">
-  <!-- subtle drop-shadow filter -->
+  <div class="speedometer"><svg class="risk-speedometer" width="460" height="290" viewBox="0 0 460 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asset risk score 5.5 of 10">
   <defs>
-    <filter id="dsoft" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="2"/>
+    <filter id="needleShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3"/>
     </filter>
   </defs>
-  <!-- background arc (mid-gray, visible on both themes) -->
-  <path d="M 50 210 A 160 160 0 0 1 370 210" stroke="#6b7280" stroke-width="22" fill="none" stroke-linecap="round"/>
-  <!-- colored zones: red 0-3, amber 3-7, green 7-10 -->
-  <path d="M 50 210 A 160 160 0 0 1 162 61" stroke="#ef4444" stroke-width="22" fill="none" stroke-linecap="round"/>
-  <path d="M 162 61 A 160 160 0 0 1 258 61" stroke="#f59e0b" stroke-width="22" fill="none" stroke-linecap="round"/>
-  <path d="M 258 61 A 160 160 0 0 1 370 210" stroke="#10b981" stroke-width="22" fill="none" stroke-linecap="round"/>
-  <!-- needle shadow -->
-  <line x1="210" y1="210" x2="210" y2="70" stroke="black" stroke-opacity="0.35" stroke-width="8" stroke-linecap="round" filter="url(#dsoft)" transform="rotate(9.0, 210, 210)"/>
-  <!-- needle: white fill with dark outline for legibility on both themes -->
-  <line x1="210" y1="210" x2="210" y2="70" stroke="#111" stroke-width="7" stroke-linecap="round" transform="rotate(9.0, 210, 210)"/>
-  <line x1="210" y1="210" x2="210" y2="70" stroke="#ffffff" stroke-width="4" stroke-linecap="round" transform="rotate(9.0, 210, 210)"/>
-  <!-- hub -->
-  <circle cx="210" cy="210" r="11" fill="#111" stroke="#ffffff" stroke-width="2"/>
-  <!-- score label: white fill with black stroke outline so it works on any bg -->
-  <text x="210" y="195" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="44" font-weight="800" fill="#ffffff" stroke="#000000" stroke-width="4" paint-order="stroke fill" stroke-linejoin="round">5.5</text>
-  <!-- "/10" subscript -->
-  <text x="210" y="225" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#9ca3af" stroke="#000000" stroke-width="2" paint-order="stroke fill">out of 10</text>
+
+  <!-- Title -->
+  <text x="230" y="30" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#ffffff" stroke="#000000" stroke-width="3" paint-order="stroke fill">RISK SCORE</text>
+
+  <!-- Background arc (dim, visible on both themes) -->
+  <path d="M 60 235 A 170 170 0 0 1 400 235" stroke="#6b7280" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <!-- Colored zones: red 0-3, amber 3-7, green 7-10 -->
+  <path d="M 60 235 A 170 170 0 0 1 176 80" stroke="#ef4444" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <path d="M 176 80 A 170 170 0 0 1 284 80" stroke="#f59e0b" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <path d="M 284 80 A 170 170 0 0 1 400 235" stroke="#10b981" stroke-width="24" fill="none" stroke-linecap="round"/>
+
+  <!-- Tick labels: 0 (left), 5 (top), 10 (right) -->
+  <text x="46" y="262" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#ffffff" stroke="#000000" stroke-width="3" paint-order="stroke fill">0</text>
+  <text x="230" y="56" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#ffffff" stroke="#000000" stroke-width="3" paint-order="stroke fill">5</text>
+  <text x="414" y="262" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#ffffff" stroke="#000000" stroke-width="3" paint-order="stroke fill">10</text>
+
+  <!-- Needle shadow (blurred) -->
+  <line x1="230" y1="235" x2="230" y2="85" stroke="black" stroke-opacity="0.4" stroke-width="10" stroke-linecap="round" filter="url(#needleShadow)" transform="rotate(9.0, 230, 235)"/>
+  <!-- Needle: black outline under white fill for dual-theme legibility -->
+  <line x1="230" y1="235" x2="230" y2="85" stroke="#111111" stroke-width="8" stroke-linecap="round" transform="rotate(9.0, 230, 235)"/>
+  <line x1="230" y1="235" x2="230" y2="85" stroke="#ffffff" stroke-width="4" stroke-linecap="round" transform="rotate(9.0, 230, 235)"/>
+  <!-- Hub -->
+  <circle cx="230" cy="235" r="13" fill="#111111" stroke="#ffffff" stroke-width="3"/>
+
+  <!-- Big score number inside arc -->
+  <text x="230" y="205" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="58" font-weight="900" fill="#ffffff" stroke="#000000" stroke-width="5" paint-order="stroke fill" stroke-linejoin="round">5.5</text>
+  <!-- "OUT OF 10" subtitle — same outline treatment as the score so it stays visible on both themes -->
+  <text x="230" y="228" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#ffffff" stroke="#000000" stroke-width="3" paint-order="stroke fill">OUT OF 10</text>
 </svg></div>
-  <div class="meme"><img src="/assets/score-6.png" alt="score 6 meme"/></div>
 </div>
 
 <p class="verdict-tagline"><em>fine, I guess, sigh</em></p>
