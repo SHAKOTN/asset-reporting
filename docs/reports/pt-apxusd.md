@@ -7,40 +7,51 @@ date: 2026-04-21
 ---
 
 <div class="score-banner">
-  <div class="speedometer"><svg class="risk-speedometer" width="460" height="290" viewBox="0 0 460 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asset risk score 5.5 of 10">
+  <div class="speedometer"><svg class="risk-speedometer" width="520" height="360" viewBox="0 0 520 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asset risk score 5.5 of 10">
   <defs>
     <filter id="needleShadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="3"/>
+      <feGaussianBlur stdDeviation="2.5"/>
     </filter>
   </defs>
 
-  <!-- Title -->
-  <text x="230" y="30" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#ffffff" stroke="#000000" stroke-width="3" paint-order="stroke fill">RISK SCORE</text>
+  <!-- Outer dossier frame: double rule -->
+  <rect x="8" y="8" width="504" height="344" fill="none" stroke="currentColor" stroke-width="1" opacity="0.7"/>
+  <rect x="14" y="14" width="492" height="332" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.55"/>
 
-  <!-- Background arc (dim, visible on both themes) -->
-  <path d="M 60 235 A 170 170 0 0 1 400 235" stroke="#6b7280" stroke-width="24" fill="none" stroke-linecap="round"/>
-  <!-- Colored zones: red 0-3, amber 3-7, green 7-10 -->
-  <path d="M 60 235 A 170 170 0 0 1 176 80" stroke="#ef4444" stroke-width="24" fill="none" stroke-linecap="round"/>
-  <path d="M 176 80 A 170 170 0 0 1 284 80" stroke="#f59e0b" stroke-width="24" fill="none" stroke-linecap="round"/>
-  <path d="M 284 80 A 170 170 0 0 1 400 235" stroke="#10b981" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <!-- Top classification strip -->
+  <line x1="14" y1="52" x2="506" y2="52" stroke="currentColor" stroke-width="1" opacity="0.7"/>
+  <text x="28" y="38" font-size="11" font-weight="600" letter-spacing="2.5" fill="currentColor" opacity="0.85">ASSET / PT-APXUSD</text>
+  <text x="492" y="38" text-anchor="end" font-size="11" font-weight="600" letter-spacing="2" fill="currentColor" opacity="0.85">DOS-9303</text>
 
-  <!-- Tick labels: 0 (left), 5 (top), 10 (right) -->
-  <text x="46" y="262" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#ffffff" stroke="#000000" stroke-width="3" paint-order="stroke fill">0</text>
-  <text x="230" y="56" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#ffffff" stroke="#000000" stroke-width="3" paint-order="stroke fill">5</text>
-  <text x="414" y="262" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#ffffff" stroke="#000000" stroke-width="3" paint-order="stroke fill">10</text>
+  <!-- RISK SCORE label -->
+  <text x="260" y="80" text-anchor="middle" font-size="10" font-weight="500" letter-spacing="6" fill="currentColor" opacity="0.65">— RISK SCORE —</text>
 
-  <!-- Needle shadow (blurred) -->
-  <line x1="230" y1="235" x2="230" y2="85" stroke="black" stroke-opacity="0.4" stroke-width="10" stroke-linecap="round" filter="url(#needleShadow)" transform="rotate(9.0, 230, 235)"/>
-  <!-- Needle: black outline under white fill for dual-theme legibility -->
-  <line x1="230" y1="235" x2="230" y2="85" stroke="#111111" stroke-width="8" stroke-linecap="round" transform="rotate(9.0, 230, 235)"/>
-  <line x1="230" y1="235" x2="230" y2="85" stroke="#ffffff" stroke-width="4" stroke-linecap="round" transform="rotate(9.0, 230, 235)"/>
-  <!-- Hub -->
-  <circle cx="230" cy="235" r="13" fill="#111111" stroke="#ffffff" stroke-width="3"/>
+  <!-- Arc (background + zones). Center 260, 260. Radius 160. -->
+  <path d="M 100 260 A 160 160 0 0 1 420 260" stroke="currentColor" stroke-width="26" fill="none" stroke-linecap="butt" opacity="0.12"/>
+  <path d="M 100 260 A 160 160 0 0 1 209 113" stroke="#c62828" stroke-width="22" fill="none" stroke-linecap="butt"/>
+  <path d="M 209 113 A 160 160 0 0 1 311 113" stroke="#b45309" stroke-width="22" fill="none" stroke-linecap="butt"/>
+  <path d="M 311 113 A 160 160 0 0 1 420 260" stroke="#4d6b1f" stroke-width="22" fill="none" stroke-linecap="butt"/>
 
-  <!-- Big score number inside arc -->
-  <text x="230" y="205" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="58" font-weight="900" fill="#ffffff" stroke="#000000" stroke-width="5" paint-order="stroke fill" stroke-linejoin="round">5.5</text>
-  <!-- "OUT OF 10" subtitle — same outline treatment as the score so it stays visible on both themes -->
-  <text x="230" y="228" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#ffffff" stroke="#000000" stroke-width="3" paint-order="stroke fill">OUT OF 10</text>
+  <line x1="118.0" y1="260.0" x2="112.0" y2="260.0" stroke="currentColor" stroke-width="1.8" opacity="0.85"/><line x1="119.7" y1="237.8" x2="109.9" y2="236.2" stroke="currentColor" stroke-width="1" opacity="0.45"/><line x1="124.9" y1="216.1" x2="119.2" y2="214.3" stroke="currentColor" stroke-width="1.8" opacity="0.85"/><line x1="133.5" y1="195.5" x2="124.6" y2="191.0" stroke="currentColor" stroke-width="1" opacity="0.45"/><line x1="145.1" y1="176.5" x2="140.3" y2="173.0" stroke="currentColor" stroke-width="1.8" opacity="0.85"/><line x1="159.6" y1="159.6" x2="152.5" y2="152.5" stroke="currentColor" stroke-width="1" opacity="0.45"/><line x1="176.5" y1="145.1" x2="173.0" y2="140.3" stroke="currentColor" stroke-width="1.8" opacity="0.85"/><line x1="195.5" y1="133.5" x2="191.0" y2="124.6" stroke="currentColor" stroke-width="1" opacity="0.45"/><line x1="216.1" y1="124.9" x2="214.3" y2="119.2" stroke="currentColor" stroke-width="1.8" opacity="0.85"/><line x1="237.8" y1="119.7" x2="236.2" y2="109.9" stroke="currentColor" stroke-width="1" opacity="0.45"/><line x1="260.0" y1="118.0" x2="260.0" y2="112.0" stroke="currentColor" stroke-width="1.8" opacity="0.85"/><line x1="282.2" y1="119.7" x2="283.8" y2="109.9" stroke="currentColor" stroke-width="1" opacity="0.45"/><line x1="303.9" y1="124.9" x2="305.7" y2="119.2" stroke="currentColor" stroke-width="1.8" opacity="0.85"/><line x1="324.5" y1="133.5" x2="329.0" y2="124.6" stroke="currentColor" stroke-width="1" opacity="0.45"/><line x1="343.5" y1="145.1" x2="347.0" y2="140.3" stroke="currentColor" stroke-width="1.8" opacity="0.85"/><line x1="360.4" y1="159.6" x2="367.5" y2="152.5" stroke="currentColor" stroke-width="1" opacity="0.45"/><line x1="374.9" y1="176.5" x2="379.7" y2="173.0" stroke="currentColor" stroke-width="1.8" opacity="0.85"/><line x1="386.5" y1="195.5" x2="395.4" y2="191.0" stroke="currentColor" stroke-width="1" opacity="0.45"/><line x1="395.1" y1="216.1" x2="400.8" y2="214.3" stroke="currentColor" stroke-width="1.8" opacity="0.85"/><line x1="400.3" y1="237.8" x2="410.1" y2="236.2" stroke="currentColor" stroke-width="1" opacity="0.45"/><line x1="402.0" y1="260.0" x2="408.0" y2="260.0" stroke="currentColor" stroke-width="1.8" opacity="0.85"/>
+
+  <!-- Tick labels 0, 10 -->
+  <text x="80" y="282" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor" opacity="0.85">0</text>
+  <text x="440" y="282" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor" opacity="0.85">10</text>
+
+  <!-- Needle: shadow + solid bar + hub -->
+  <line x1="260" y1="260" x2="260" y2="120" stroke="currentColor" stroke-opacity="0.3" stroke-width="7" stroke-linecap="round" filter="url(#needleShadow)" transform="rotate(9.0, 260, 260)"/>
+  <line x1="260" y1="260" x2="260" y2="120" stroke="currentColor" stroke-width="4" stroke-linecap="round" transform="rotate(9.0, 260, 260)"/>
+  <circle cx="260" cy="260" r="11" fill="currentColor"/>
+  <circle cx="260" cy="260" r="4"  fill="var(--dossier-cream, #f4ede0)"/>
+
+  <!-- Big score numeral -->
+  <text x="260" y="230" text-anchor="middle" font-size="58" font-weight="700" letter-spacing="-1" fill="currentColor">5.5</text>
+  <text x="260" y="248" text-anchor="middle" font-size="10" font-weight="500" letter-spacing="5" fill="currentColor" opacity="0.7">/ 10</text>
+
+  <!-- Bottom classification strip -->
+  <line x1="14" y1="300" x2="506" y2="300" stroke="currentColor" stroke-width="1" opacity="0.7"/>
+  <text x="260" y="322" text-anchor="middle" font-size="9" font-weight="500" letter-spacing="4" fill="currentColor" opacity="0.6">— CLASSIFICATION —</text>
+  <text x="260" y="342" text-anchor="middle" font-size="13" font-weight="700" letter-spacing="3" fill="currentColor">FINE, I GUESS, SIGH</text>
 </svg></div>
 </div>
 

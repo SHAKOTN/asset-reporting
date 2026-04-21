@@ -1,121 +1,478 @@
-/* Score banner: centered speedometer (memes removed) */
+/* ─────────────────────────────────────────────────────────────────────
+   Asset Risk Reports — Brutalist Financial Dossier
+   ────────────────────────────────────────────────────────────────────
+   Type:  IBM Plex Mono (display + data) + IBM Plex Serif (prose) +
+          IBM Plex Sans (tables, UI).
+   Palette: warm parchment / oxblood / near-black in light mode,
+            near-black / crimson / off-white cream in dark mode.
+   Moves: oversized numbered section markers (§ 01), hairline rules,
+          stamped severity badges, classification-strip speedometer.
+   ────────────────────────────────────────────────────────────────────*/
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+/* ── Tighten Material's root zoom (it ships ~137.5% which feels
+   zoomed-in on wide monitors). 112.5% keeps rem-based sizing usable
+   without shrinking the page to unreadable. ────────────────────────── */
+html {
+  font-size: 112.5%;
+}
+
+/* ── Palette tokens ────────────────────────────────────────────────── */
+:root {
+  --dossier-cream: #f4ede0;
+  --dossier-cream-alt: #e8dec8;
+  --dossier-ink: #1a1512;
+  --dossier-ink-soft: #3d342e;
+  --dossier-muted: #6b5f55;
+  --dossier-rule: #1a151222;
+  --dossier-rule-strong: #1a1512aa;
+  --dossier-oxblood: #8b1a1a;
+  --dossier-crimson: #c62828;
+  --dossier-amber: #b45309;
+  --dossier-olive: #4d6b1f;
+  --dossier-stamp-bg: #1a15120a;
+}
+
+[data-md-color-scheme="slate"] {
+  --dossier-cream: #0f0d0c;
+  --dossier-cream-alt: #181513;
+  --dossier-ink: #f0ebe1;
+  --dossier-ink-soft: #c9c0b2;
+  --dossier-muted: #8a7f73;
+  --dossier-rule: #f0ebe122;
+  --dossier-rule-strong: #f0ebe1cc;
+  --dossier-oxblood: #ff4444;
+  --dossier-crimson: #ff6b6b;
+  --dossier-amber: #fbbf24;
+  --dossier-olive: #84cc16;
+  --dossier-stamp-bg: #f0ebe108;
+}
+
+/* ── Palette overrides into Material ───────────────────────────────── */
+:root > * {
+  --md-default-bg-color: var(--dossier-cream);
+  --md-default-fg-color: var(--dossier-ink);
+  --md-default-fg-color--light: var(--dossier-ink-soft);
+  --md-default-fg-color--lighter: var(--dossier-muted);
+  --md-primary-bg-color: var(--dossier-ink);
+  --md-primary-fg-color: var(--dossier-ink);
+  --md-accent-fg-color: var(--dossier-oxblood);
+  --md-typeset-color: var(--dossier-ink);
+  --md-typeset-a-color: var(--dossier-oxblood);
+  --md-code-bg-color: var(--dossier-cream-alt);
+  --md-code-fg-color: var(--dossier-ink);
+}
+
+body {
+  background-color: var(--dossier-cream);
+  /* subtle paper grain */
+  background-image:
+    radial-gradient(circle at 20% 30%, #0000000a 1px, transparent 1px),
+    radial-gradient(circle at 70% 80%, #0000000a 1px, transparent 1px);
+  background-size: 3px 3px, 5px 5px;
+}
+
+[data-md-color-scheme="slate"] body {
+  background-image:
+    radial-gradient(circle at 20% 30%, #ffffff08 1px, transparent 1px),
+    radial-gradient(circle at 70% 80%, #ffffff06 1px, transparent 1px);
+}
+
+/* ── Typography ─────────────────────────────────────────────────────── */
+.md-typeset {
+  font-family: 'IBM Plex Serif', Georgia, serif;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--dossier-ink);
+}
+
+/* h1: dossier masthead */
+.md-typeset h1 {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 2.0rem;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--dossier-ink);
+  margin: 1.2rem 0 0.4rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 3px double var(--dossier-rule-strong);
+}
+
+/* h2: section headers with oversized hanging numeral */
+.md-typeset {
+  counter-reset: section;
+}
+.md-typeset h2 {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dossier-ink);
+  margin: 2.4rem 0 0.4rem;
+  padding: 0.8rem 0 0.25rem;
+  border-top: 1px solid var(--dossier-rule-strong);
+  display: grid;
+  grid-template-columns: 4.2rem 1fr;
+  align-items: baseline;
+  gap: 0.6rem;
+  counter-increment: section;
+}
+.md-typeset h2::before {
+  content: "§ " counter(section, decimal-leading-zero);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 500;
+  font-size: 1.35rem;
+  color: var(--dossier-oxblood);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* h3: agent-section + subsection treatment */
+.md-typeset h3 {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.03em;
+  color: var(--dossier-ink);
+  margin: 2.0rem 0 0.6rem;
+  text-transform: uppercase;
+}
+
+.md-typeset h4 {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  margin: 1.3rem 0 0.4rem;
+  color: var(--dossier-ink);
+  text-transform: none;
+}
+
+.md-typeset p { color: var(--dossier-ink); }
+.md-typeset em {
+  color: var(--dossier-ink-soft);
+  font-style: italic;
+}
+.md-typeset strong { color: var(--dossier-ink); font-weight: 700; }
+
+/* Body links: oxblood underline */
+.md-typeset a {
+  color: var(--dossier-oxblood);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.md-typeset a:hover {
+  color: var(--dossier-crimson);
+  background: var(--dossier-stamp-bg);
+}
+
+/* Inline code: plex mono, cream-alt background, tight */
+.md-typeset code {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.82em;
+  background: var(--dossier-cream-alt);
+  border: 1px solid var(--dossier-rule);
+  padding: 0 4px;
+  border-radius: 2px;
+  color: var(--dossier-ink);
+}
+
+/* Code blocks: tight dossier feel */
+.md-typeset pre > code {
+  border: 1px solid var(--dossier-rule-strong);
+  border-radius: 0;
+  padding: 0.85rem 1rem;
+  background: var(--dossier-cream-alt);
+  font-size: 0.78em;
+  line-height: 1.55;
+}
+[data-md-color-scheme="slate"] .md-typeset pre > code {
+  background: #0a0908;
+}
+
+/* Tables: Plex Sans body, Plex Mono header, hairline rules only */
+.md-typeset table:not([class]) {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 0.78rem;
+  border: 1px solid var(--dossier-rule-strong);
+  border-collapse: collapse;
+  background: transparent;
+  box-shadow: none;
+}
+.md-typeset table:not([class]) th {
+  background: var(--dossier-ink);
+  color: var(--dossier-cream);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.7rem;
+  padding: 0.55rem 0.8rem;
+  border-bottom: 2px solid var(--dossier-ink);
+}
+.md-typeset table:not([class]) td {
+  padding: 0.55rem 0.8rem;
+  border-top: 1px solid var(--dossier-rule);
+  border-bottom: 0;
+  color: var(--dossier-ink);
+}
+.md-typeset table:not([class]) tr:nth-child(even) td {
+  background: var(--dossier-cream-alt);
+}
+
+/* Blockquotes: stamp/aside feel */
+.md-typeset blockquote {
+  border-left: 3px solid var(--dossier-oxblood);
+  padding: 0.4rem 0.9rem;
+  margin: 1rem 0;
+  background: var(--dossier-stamp-bg);
+  font-family: 'IBM Plex Serif', Georgia, serif;
+  font-style: italic;
+  color: var(--dossier-ink-soft);
+}
+
+/* Horizontal rule: double rule */
+.md-typeset hr {
+  border: 0;
+  border-top: 3px double var(--dossier-rule-strong);
+  margin: 2rem 0;
+}
+
+/* ── Score banner ──────────────────────────────────────────────────── */
 .score-banner {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 1rem 0 0.5rem 0;
+  margin: 1.2rem 0 0.4rem 0;
 }
-
 .score-banner .speedometer {
   flex: 0 0 auto;
 }
-
 .verdict-tagline {
   text-align: center;
-  font-size: 1.4rem;
-  margin: 0.25rem 0 2rem 0;
-  color: #555;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 0.3rem 0 2.2rem 0;
+  color: var(--dossier-ink-soft);
+}
+.verdict-tagline em {
+  font-style: normal;
+  border-top: 1px solid var(--dossier-rule-strong);
+  border-bottom: 1px solid var(--dossier-rule-strong);
+  padding: 0.35rem 1.2rem;
+  display: inline-block;
+  color: var(--dossier-ink);
 }
 
-/* Warning banner for low-confidence sections */
-blockquote + p > em {
-  color: #b33;
-}
-
-/* Red flags section */
-h2:has(+ p + ul) {
-  color: #c00;
-}
-
-/* Severity badges on findings — critical glows, high is solid red,
-   medium amber, low green, info neutral. Color hits on both light
-   and dark theme; text-shadow gives the glow on dark bg.
-*/
+/* ── Severity badges ──────────────────────────────────────────────── */
 .sev-badge {
   display: inline-block;
-  padding: 1px 6px;
-  margin-right: 4px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  margin-right: 6px;
+  border-radius: 0;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-weight: 700;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.82em;
-  letter-spacing: 0.02em;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+  border: 1px solid currentColor;
 }
 
 .sev-critical {
   color: #ff2d2d;
-  text-shadow:
-    0 0 4px rgba(255, 45, 45, 0.85),
-    0 0 10px rgba(255, 45, 45, 0.45);
   background: rgba(255, 45, 45, 0.08);
-  border: 1px solid rgba(255, 45, 45, 0.35);
+  text-shadow:
+    0 0 5px rgba(255, 45, 45, 0.75),
+    0 0 12px rgba(255, 45, 45, 0.4);
+  animation: critPulse 2.6s ease-in-out infinite;
+}
+@keyframes critPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 45, 45, 0.35); }
+  50%      { box-shadow: 0 0 0 4px rgba(255, 45, 45, 0); }
 }
 
-.sev-high {
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.08);
-  border: 1px solid rgba(220, 38, 38, 0.30);
-}
+.sev-high    { color: #dc2626; background: rgba(220, 38, 38, 0.07); }
+.sev-medium  { color: #b45309; background: rgba(180, 83, 9, 0.08);  }
+.sev-low     { color: #4d6b1f; background: rgba(77, 107, 31, 0.08); }
+.sev-info    { color: var(--dossier-muted); background: var(--dossier-stamp-bg); }
 
-.sev-medium {
-  color: #d97706;
-  background: rgba(217, 119, 6, 0.08);
-  border: 1px solid rgba(217, 119, 6, 0.30);
-}
-
-.sev-low {
-  color: #16a34a;
-  background: rgba(22, 163, 74, 0.08);
-  border: 1px solid rgba(22, 163, 74, 0.28);
-}
-
-.sev-info {
-  color: #6b7280;
-  background: rgba(107, 114, 128, 0.06);
-  border: 1px solid rgba(107, 114, 128, 0.25);
-}
-
-/* Dark theme: shift palette slightly for legibility */
 [data-md-color-scheme="slate"] .sev-critical {
   color: #ff5a5a;
   text-shadow:
-    0 0 6px rgba(255, 90, 90, 0.95),
-    0 0 14px rgba(255, 90, 90, 0.55);
+    0 0 7px rgba(255, 90, 90, 0.95),
+    0 0 16px rgba(255, 90, 90, 0.5);
 }
 [data-md-color-scheme="slate"] .sev-high    { color: #f87171; }
 [data-md-color-scheme="slate"] .sev-medium  { color: #fbbf24; }
-[data-md-color-scheme="slate"] .sev-low     { color: #4ade80; }
-[data-md-color-scheme="slate"] .sev-info    { color: #9ca3af; }
+[data-md-color-scheme="slate"] .sev-low     { color: #a3e635; }
+[data-md-color-scheme="slate"] .sev-info    { color: #a8a090; }
 
-/* Per-agent section headers under "Detailed findings" — colored left bar
-   + slightly larger font to make each agent section visually distinct. */
+/* ── Per-agent section headers ─────────────────────────────────────── */
 h3.agent-section {
-  padding: 0.35rem 0 0.35rem 0.9rem;
-  border-left: 5px solid var(--md-primary-fg-color, #888);
-  margin-top: 2.25rem;
-  margin-bottom: 1rem;
-  font-size: 1.25em;
-  background: rgba(128, 128, 128, 0.04);
+  padding: 0.55rem 0 0.55rem 1rem;
+  border-left: 4px solid var(--dossier-muted);
+  margin-top: 2.6rem;
+  margin-bottom: 1.1rem;
+  font-size: 1.08rem;
+  background: var(--dossier-stamp-bg);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 h3.agent-governance-security { border-left-color: #dc2626; }
-h3.agent-asset-controls      { border-left-color: #0ea5e9; }
-h3.agent-code-quality        { border-left-color: #8b5cf6; }
-h3.agent-cross-chain-surface { border-left-color: #14b8a6; }
-h3.agent-team-transparency   { border-left-color: #f59e0b; }
-h3.agent-liquidity-depth     { border-left-color: #3b82f6; }
-h3.agent-controversy         { border-left-color: #db2777; }
+h3.agent-asset-controls      { border-left-color: #0369a1; }
+h3.agent-code-quality        { border-left-color: #7c3aed; }
+h3.agent-cross-chain-surface { border-left-color: #0d9488; }
+h3.agent-team-transparency   { border-left-color: #b45309; }
+h3.agent-liquidity-depth     { border-left-color: #1d4ed8; }
+h3.agent-controversy         { border-left-color: #be185d; }
 
-/* Per-finding headers — a smaller left accent tinted by severity. */
+[data-md-color-scheme="slate"] h3.agent-governance-security { border-left-color: #f87171; }
+[data-md-color-scheme="slate"] h3.agent-asset-controls      { border-left-color: #38bdf8; }
+[data-md-color-scheme="slate"] h3.agent-code-quality        { border-left-color: #c4b5fd; }
+[data-md-color-scheme="slate"] h3.agent-cross-chain-surface { border-left-color: #5eead4; }
+[data-md-color-scheme="slate"] h3.agent-team-transparency   { border-left-color: #fbbf24; }
+[data-md-color-scheme="slate"] h3.agent-liquidity-depth     { border-left-color: #60a5fa; }
+[data-md-color-scheme="slate"] h3.agent-controversy         { border-left-color: #f472b6; }
+
+/* Per-finding headers ─ left tick accent tinted by severity */
 h4.finding-header {
-  padding: 0.15rem 0 0.15rem 0.65rem;
+  padding: 0.3rem 0 0.3rem 0.85rem;
   border-left: 3px solid transparent;
-  margin-top: 1.25rem;
-  margin-bottom: 0.5rem;
-  font-size: 1.02em;
+  margin: 1.4rem 0 0.5rem;
+  font-size: 0.95rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  letter-spacing: 0.02em;
 }
 h4.finding-critical { border-left-color: #ff2d2d; }
 h4.finding-high     { border-left-color: #dc2626; }
-h4.finding-medium   { border-left-color: #d97706; }
-h4.finding-low      { border-left-color: #16a34a; }
-h4.finding-info     { border-left-color: #9ca3af; }
+h4.finding-medium   { border-left-color: #b45309; }
+h4.finding-low      { border-left-color: #4d6b1f; }
+h4.finding-info     { border-left-color: var(--dossier-muted); }
+
+/* ── Speedometer SVG + classification strip ───────────────────────── */
+.risk-speedometer {
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.12));
+}
+.risk-speedometer text,
+.risk-speedometer tspan {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace !important;
+}
+
+/* ── Nav + header refinements ─────────────────────────────────────── */
+/* Force every header descendant to cream — Material's nested selectors
+   (title, breadcrumb, buttons, search input) otherwise inherit dark text
+   from the palette.primary setting and render invisible on dark bg. */
+.md-header,
+.md-header *,
+.md-header a,
+.md-header input {
+  color: #f0ebe1;
+}
+.md-header {
+  background: #0f0d0c;
+  box-shadow: 0 1px 0 0 var(--dossier-oxblood);
+}
+.md-header__title {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  color: #f0ebe1;
+}
+.md-header__topic > .md-ellipsis {
+  color: #f0ebe1;
+}
+.md-header__button.md-icon svg {
+  fill: #f0ebe1;
+}
+.md-search__input {
+  background: rgba(240, 235, 225, 0.08);
+  color: #f0ebe1;
+}
+.md-search__input::placeholder {
+  color: rgba(240, 235, 225, 0.55);
+}
+.md-search__icon svg {
+  fill: #f0ebe1;
+}
+.md-tabs {
+  background: #0f0d0c;
+  color: #f0ebe1;
+  border-bottom: 1px solid var(--dossier-oxblood);
+}
+.md-tabs__link,
+.md-tabs__link--active {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+  color: #f0ebe1;
+}
+.md-tabs__link:hover {
+  color: #ffffff;
+}
+
+/* Sidebar tweaks */
+.md-nav__title {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--dossier-muted);
+}
+.md-nav__link {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 0.82rem;
+}
+
+/* ── Details / collapsibles (resolved open questions) ─────────────── */
+.md-typeset details {
+  border: 1px solid var(--dossier-rule-strong);
+  border-radius: 0;
+  background: var(--dossier-stamp-bg);
+  box-shadow: none;
+  font-size: 0.8rem;
+}
+.md-typeset details > summary {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* ── Page load stagger reveal ─────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .md-typeset > * {
+    animation: dossierFade 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--stagger, 0) * 1ms);
+  }
+  .md-typeset > h1    { --stagger: 0;   }
+  .md-typeset > .score-banner { --stagger: 40;  }
+  .md-typeset > .verdict-tagline { --stagger: 80;  }
+  .md-typeset > h2    { --stagger: 140; }
+  .md-typeset > p     { --stagger: 180; }
+  .md-typeset > table { --stagger: 220; }
+}
+@keyframes dossierFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── Hide sections we don't want numbered (h1 under title, etc.) ──── */
+.md-typeset h2[id="red-flags-raised"]::before,
+.md-typeset h2[id="open-questions-for-the-team"]::before {
+  color: var(--dossier-oxblood);
+}

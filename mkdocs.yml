@@ -7,6 +7,9 @@ repo_name: SHAKOTN/asset-reporting
 
 theme:
   name: material
+  font:
+    text: IBM Plex Serif
+    code: IBM Plex Mono
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
