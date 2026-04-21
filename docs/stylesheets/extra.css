@@ -95,3 +95,36 @@ h2:has(+ p + ul) {
 [data-md-color-scheme="slate"] .sev-medium  { color: #fbbf24; }
 [data-md-color-scheme="slate"] .sev-low     { color: #4ade80; }
 [data-md-color-scheme="slate"] .sev-info    { color: #9ca3af; }
+
+/* Per-agent section headers under "Detailed findings" — colored left bar
+   + slightly larger font to make each agent section visually distinct. */
+h3.agent-section {
+  padding: 0.35rem 0 0.35rem 0.9rem;
+  border-left: 5px solid var(--md-primary-fg-color, #888);
+  margin-top: 2.25rem;
+  margin-bottom: 1rem;
+  font-size: 1.25em;
+  background: rgba(128, 128, 128, 0.04);
+}
+
+h3.agent-governance-security { border-left-color: #dc2626; }
+h3.agent-asset-controls      { border-left-color: #0ea5e9; }
+h3.agent-code-quality        { border-left-color: #8b5cf6; }
+h3.agent-cross-chain-surface { border-left-color: #14b8a6; }
+h3.agent-team-transparency   { border-left-color: #f59e0b; }
+h3.agent-liquidity-depth     { border-left-color: #3b82f6; }
+h3.agent-controversy         { border-left-color: #db2777; }
+
+/* Per-finding headers — a smaller left accent tinted by severity. */
+h4.finding-header {
+  padding: 0.15rem 0 0.15rem 0.65rem;
+  border-left: 3px solid transparent;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.02em;
+}
+h4.finding-critical { border-left-color: #ff2d2d; }
+h4.finding-high     { border-left-color: #dc2626; }
+h4.finding-medium   { border-left-color: #d97706; }
+h4.finding-low      { border-left-color: #16a34a; }
+h4.finding-info     { border-left-color: #9ca3af; }
