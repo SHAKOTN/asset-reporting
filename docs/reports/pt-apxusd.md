@@ -515,41 +515,92 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
 
 ### Asset Controls  (score 6, confidence 0.85)
 
-- <span class="sev-badge sev-medium">[MEDIUM]</span> **apxUSD.mint gated by MinterV0 contract (role 4) with 10M/day rate limit, 4h exec delay, and signed orders**
-  apxUSD.mint(address,uint256,uint256) selector 0x156e29f6 is gated by role 4 (verified via raw call getTargetFunctionRole @ 0x6d5115bd). Role 4 is held solely by the MinterV0 mint-strategy contract at 0x2c36e1adFaA80ee0324B04cC814F5207Bb7Ba76e with a 14400s (4h) execution delay. Role 4 grant delay is 259200s (3 days). MinterV0 enforces: max 10,000,000 apxUSD per tx, rate limit 10,000,000 apxUSD per 86,400s (1 day), supply cap 300,000,000 apxUSD (live read supplyCap() = 3e26). Current totalSupply() = 1.8e26 (~180M). MinterV0 requires EIP-712 signed orders; requestMint (selector 0xeecd570d) and executeMint (0x14d39415) on MinterV0 are gated by role 2 (MINTER_CONTRACT), held by the 3-of-6 Safe 0xf9862EfC1704aC05e687f66E5cD8c130E5663cE2 with 0 exec delay. Effective minting bar: 3 of 6 Safe signers sign an EIP-712 order -> MinterV0 validates + enforces 10M/day + 10M/tx + cap -> tokens minted after 4h role-4 execution delay. Layered and capped, but the human bar is 3/6 (50%) which is at the low end for a dollar-stable with $180M live supply.
-  *Evidence:* MinterV0 0x2c36e1adFaA80ee0324B04cC814F5207Bb7Ba76e (Etherscan verified 'MinterV0') | role 4 RoleGranted tx 0x75e353f8a1e894fbfc2cd4361f1e16997c48c3f3810b48b51410030308f4f5b5 block 24849935 (delay 14400) | role 2 RoleGranted tx 0x00f7dd292e9b611709879d357bceabede5c1bed180431911520eea47d508f185 block 24734715 (delay 0) | supplyCap() = 3e26, totalSupply() = 1.8e26
+- <span class="sev-badge sev-medium">[MEDIUM]</span> **apxUSD.mint is rate-limited: MinterV0 caps 10M/day + 4h exec delay, upstream gate is 3-of-6 Safe**
+  Raw minting goes through MinterV0, not direct. MinterV0 enforces 10M apxUSD/tx, 10M/day, and a 300M supply cap (current 180M). Upstream gate on MinterV0.requestMint is the 3-of-6 Safe with 0 exec delay; tokens appear 4h after the role-4 delay.
 
-- <span class="sev-badge sev-medium">[MEDIUM]</span> **UUPS upgradeToAndCall held by 3-of-6 Safe with only 3-day delay**
-  apxUSD is a UUPS upgradeable proxy. Selector 0x4f1ef286 (upgradeToAndCall(address,bytes)) is gated by role 24, held by Safe 0xf9862EfC1704aC05e687f66E5cD8c130E5663cE2 (3/6) with 259200s (3 day) execution delay. A 3/6 Safe (50% of signers) can push any new implementation after a 3-day wait, effectively bypassing mint caps, rate limits, deny list, or pause state. 3 days is the industry floor for defensible upgrade delay and the signer bar (3/6 = 50%) is below the typical 4/7 (57%) bar for a stablecoin with $180M live supply. ADMIN (4/6 Safe) can at any moment (0 delay) revoke or re-assign role 24, but an already-scheduled upgrade would still execute per OZ AccessManager semantics unless explicitly canceled.
-  *Evidence:* TargetFunctionRoleUpdated(target=apxUSD, selector=0x4f1ef286, role=24) tx 0x79ff2a3aaf7c1eba6a18eb96b0aa2d3aed541a4cd408704bdd2c951e3560db02 block 24828844 logIndex 242 | RoleGranted(24, 0xf9862..., delay=0x3f480=259200) tx 0x01ff58d25be1119379d42ebc2d72e1039e4d374d7ad3ee823340589afbf31990 block 24792767
+  **Verify on-chain:**
 
-- <span class="sev-badge sev-medium">[MEDIUM]</span> **DenyList (blacklist) and supplyCap gated by 3-of-6 Safe with 1-day delay**
-  setDenyList(address) selector 0x0de2731d and setSupplyCap(uint256) selector 0xb6a3f59a are both gated by role 23, held by Safe 0xf9862EfC1704aC05e687f66E5cD8c130E5663cE2 (3/6) with 86400s (1 day) execution delay. apxUSD IS a blacklist token: individual addresses can be denied sends/receives. For Fira as a collateral holder this matters indirectly — the vault/market could in principle be placed on the deny list, blocking apxUSD flows. 3/6 + 1-day is weak for blacklist power: 3 colluding signers can blacklist the Fira market or LPs with 24h notice. supplyCap increase is similarly gated (could raise from 300M to unlimited with 24h notice, though MinterV0's 10M/day drip still caps velocity). Fira holds PT-apxUSD not apxUSD at rest, so direct exposure is limited, but the Apyx CR feed path and Pendle TWAP both rely on an un-censored apxUSD spot market.
-  *Evidence:* TargetFunctionRoleUpdated logIndex 240 (setSupplyCap -> role 0x17=23) and logIndex 241 (setDenyList -> role 0x17=23) tx 0x79ff2a3aaf7c1eba6a18eb96b0aa2d3aed541a4cd408704bdd2c951e3560db02 block 24828844 | RoleGranted(23, 0xf9862, delay=0x15180=86400) tx 0x01ff58d25be1119379d42ebc2d72e1039e4d374d7ad3ee823340589afbf31990 block 24792767
+  ```bash
+  cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getTargetFunctionRole(address,bytes4)(uint64)' 0x98A878b1Cd98131B271883B390f68D2c90674665 0x156e29f6 --rpc-url $RPC
+  # → expect: 4  # role 4 gates apxUSD.mint
+  cast call 0x98A878b1Cd98131B271883B390f68D2c90674665 'totalSupply()(uint256)' --rpc-url $RPC
+  # → expect: 1.8e26 (~180M)
+  ```
 
-- <span class="sev-badge sev-low">[LOW]</span> **Pause held by 3-of-6 Safe with ZERO execution delay; unpause 4h delay**
-  pause() selector 0x8456cb59 is gated by role 21, held by Safe 0xf9862... (3/6) with 0 execution delay — 3 signers can freeze all apxUSD transfers immediately. unpause() selector 0x3f4ba83a is gated by role 22 (same 3/6 Safe) with 14400s (4h) execution delay. During a paused window, any Fira flow requiring apxUSD movement reverts. Fira does not hold apxUSD directly (holds PT-apxUSD) but arbitrage and Pendle TWAP updates depend on apxUSD being transferable. Pause-with-no-delay is standard for stablecoin incident response but also provides a censorship vector.
-  *Evidence:* TargetFunctionRoleUpdated(apxUSD, 0x8456cb59, 21) block 24828844 logIndex 238 | TargetFunctionRoleUpdated(apxUSD, 0x3f4ba83a, 22) logIndex 239 | RoleGranted(21, 0xf9862, delay=0) and RoleGranted(22, 0xf9862, delay=14400) tx 0x01ff58d25be1119379d42ebc2d72e1039e4d374d7ad3ee823340589afbf31990
+  **Key addresses:**
 
-- <span class="sev-badge sev-low">[LOW]</span> **setCCIPAdmin and setAuthority gated by 3-of-6 Safe with 7-day delay**
-  setCCIPAdmin(address) selector 0xa8fa343c and setAuthority(address) selector 0x7a9e5e4b are both gated by role 25, held by Safe 0xf9862... (3/6) with 604800s (7 day) execution delay. setAuthority is the most sensitive function — it can replace the entire AccessManager; 7-day delay is appropriate. setCCIPAdmin controls the CCIP token admin (Chainlink cross-chain adapter) — 7-day delay also reasonable. Signer threshold is still 3/6 across all operational roles.
-  *Evidence:* TargetFunctionRoleUpdated(apxUSD, 0xa8fa343c, 25) and (apxUSD, 0x7a9e5e4b, 25) block 24828844 logIndex 243/244 | RoleGranted(25, 0xf9862, delay=604800) block 24792767
+  - MinterV0 — [`0x2c36e1adFaA80ee0324B04cC814F5207Bb7Ba76e`](https://etherscan.io/address/0x2c36e1adFaA80ee0324B04cC814F5207Bb7Ba76e)
+  - MAINTAINER Safe (3/6) — [`0xf9862efc1704ac05e687f66e5cd8c130e5663cE2`](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663cE2)
 
-- <span class="sev-badge sev-info">[INFO]</span> **AccessManager ADMIN_ROLE (role 0) currently held by 4-of-6 Safe, not an EOA**
-  Verified live via hasRole(0, 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96) => (true, 0). The Safe at 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 has threshold 4 and 6 signers (verified via getThreshold()/getOwners()). ADMIN was transferred from the genesis deployer EOA 0x0442cC5BBfBc4B7Dc3A14F9766c21C82b45f0024 (confirmed hasRole(0, EOA) => (false, 0)) and also from the 3/6 ops Safe 0xf9862EfC1704aC05e687f66E5cD8c130E5663cE2 (confirmed hasRole(0, f9862) => (false, 0)). Admin ownership move to the 4/6 Safe occurred at block 24721241 (timestamp 1772908091 ~ 2026-03-04). ADMIN has 0 execution delay but role 0 grant delay is 7 days, so adding a new admin takes 7 days.
-  *Evidence:* AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 | Safe 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 (4/6) | grant tx 0x8b6b1a3a2e7900bd0b5f1d49a1d6fe840cedb4b2af26da7147eb52ca3e5af417 block 24721241
+- <span class="sev-badge sev-medium">[MEDIUM]</span> **apxUSD upgrade (role 24) gated by 3-of-6 Safe + 3-day delay — low signer bar for $180M supply**
+  A successful 3-signer phish in 3 days replaces the implementation; every cap, rate limit, and pause is bypassable. 3-day delay is industry floor; 3/6 threshold is below the 4/7 bar expected for a stablecoin at this size.
 
-- <span class="sev-badge sev-info">[INFO]</span> **Role taxonomy: labeled vs unlabeled roles**
-  AccessManager RoleLabel events emitted at deployment (block 24481041-24481052) cover: role 1=ROLE_MINT_STRAT, role 2=ROLE_MINTER (MINTER_CONTRACT), role 3=ROLE_MINT_GUARD, role 6=ROLE_YIELD_DISTRIBUTOR, role 7=ROLE_YIELD_OPERATOR, role 8=ROLE_REDEEMER. Roles 4, 21-25 that currently gate apxUSD's critical functions were NOT emitted with RoleLabel events — they were introduced in later setTargetFunctionRole batches (block 24734715 for MinterV0 wiring, 24828844 for apxUSD ops, 24849935 for the mint-role swap from role 1 to role 4). Unlabeled roles are a documentation gap: UIs, monitoring, and third-party risk systems that rely on role labels will miss the real gating. Role 31 was also assigned to MinterV0.cancelMint in a later batch.
-  *Evidence:* RoleLabel events (topic 0x1256f5b5ecb89caec12db449738f2fbcd1ba5806cf38f35413f4e5c15bf6a450) block 24481041-24481052 on AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824
+  **Verify on-chain:**
 
-- <span class="sev-badge sev-info">[INFO]</span> **Both Safes share the same 6 owner keys — effective bar is 3-of-6 for all ops**
-  The 4/6 ADMIN Safe 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 and the 3/6 ops Safe 0xf9862EfC1704aC05e687f66E5cD8c130E5663cE2 share IDENTICAL owner sets: [0xb51F89DEA7Df709cEbb4809B40c6431361e61d0d, 0x5db416BcFc1a8b5b921f55C1E078d1F39194e99F, 0xD6bB3f9718D4f30ed2851c713275dEf7529D1411, 0xcFCF3C9Ed3d97DB54c99BDd197E59952a0973f6e, 0xB98cD8C868cf00cEA934977dBE4AC090E808fb87, 0xd66a0Fc924fAb7476D35aFe5941856ef76BA0839]. Effective governance redundancy is the LOWER threshold (3/6), not the higher one — 3 colluding keys can: (a) trigger mints via MinterV0 (subject to 10M/day cap), (b) pause immediately, (c) deny-list or raise supplyCap with 1-day notice, (d) push an upgrade in 3 days. The 4/6 ADMIN only controls role management (grant/revoke/target wiring). Key-concentration risk: compromise of 3 of these 6 keys (phishing, device compromise, coercion) enables malicious upgrade in 3 days.
-  *Evidence:* getOwners() on 0xabdd... and 0xf9862... both return same 6-address array | getThreshold() returns 4 and 3 respectively
+  ```bash
+  cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'canCall(address,address,bytes4)(bool,uint32)' 0xf9862efc1704ac05e687f66e5cd8c130e5663cE2 0x98A878b1Cd98131B271883B390f68D2c90674665 0x4f1ef286 --rpc-url $RPC
+  # → expect: (false, 259200)  # must schedule, 3-day delay
+  ```
 
-- <span class="sev-badge sev-info">[INFO]</span> **Fira exposure is indirect — PT-apxUSD not apxUSD**
-  Fira's collateral is PT-apxUSD (Pendle Principal Token expiring 2026-06-18), not apxUSD at rest. PT redeems 1:1 to apxUSD at expiry. Mint authority + pause/deny list primarily affect apxUSD holders (Fira does not hold apxUSD directly). Two indirect exposures: (1) the Apyx CR capped feed 0x2037a5eb67aa9b2fbf50042b724d8c4db80f23b4 feeds the Morpho oracle 0x4DFceF82eaEE9eA817bEb1279336F7D0Ebf2b685 that drives Fira liquidations — its authority is the same AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824, so the 3/6 Safe's upgrade path also threatens the CR feed (needs a separate verification of which role gates the CR feed's upgrade, not covered in this pass); (2) Pendle TWAP oracle depends on PT trading, which depends on apxUSD being usable. Fira should treat the 3/6-Safe upgrade path as the dominant governance risk vector, not the mint cap (which is reasonably constrained by MinterV0 + 10M/day + 4h exec delay + 300M hard cap).
-  *Evidence:* docs/research/pt-apxusd-market.md | Morpho oracle 0x4DFceF82eaEE9eA817bEb1279336F7D0Ebf2b685 | Apyx CR capped feed 0x2037a5eb67aa9b2fbf50042b724d8c4db80f23b4 (authority 0xe167330E2Eac88666de253e9607C6d9ae0cA2824)
+  **Key addresses:**
+
+  - apxUSD proxy — [`0x98A878b1Cd98131B271883B390f68D2c90674665`](https://etherscan.io/address/0x98A878b1Cd98131B271883B390f68D2c90674665)
+  - MAINTAINER Safe (3/6) — [`0xf9862efc1704ac05e687f66e5cd8c130e5663cE2`](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663cE2)
+
+- <span class="sev-badge sev-medium">[MEDIUM]</span> **DenyList + setSupplyCap both gated by same 3-of-6 Safe with 1-day delay**
+  apxUSD is a blacklist token — 3 signers can deny-list the Fira market or LPs with 24h notice. Fira holds PT-apxUSD not apxUSD at rest, so direct exposure is limited, but the Apyx CR feed and Pendle TWAP both assume a functioning spot market.
+
+  **Verify on-chain:**
+
+  ```bash
+  cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getTargetFunctionRole(address,bytes4)(uint64)' 0x98A878b1Cd98131B271883B390f68D2c90674665 0x0de2731d --rpc-url $RPC
+  # → expect: 23  # setDenyList
+  cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getTargetFunctionRole(address,bytes4)(uint64)' 0x98A878b1Cd98131B271883B390f68D2c90674665 0xb6a3f59a --rpc-url $RPC
+  # → expect: 23  # setSupplyCap
+  ```
+
+- <span class="sev-badge sev-low">[LOW]</span> **apxUSD pause() is instant-role (3/6 quorum, 0 delay) — DoS lever on Fira liquidation flow**
+  unpause is 4h delayed. A pause freezes apxUSD transfers, which breaks Pendle TWAP updates and any liquidator arb that needs apxUSD movement. Standard for stablecoins but still a censorship vector.
+
+  **Verify on-chain:**
+
+  ```bash
+  cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'getTargetFunctionRole(address,bytes4)(uint64)' 0x98A878b1Cd98131B271883B390f68D2c90674665 0x8456cb59 --rpc-url $RPC
+  # → expect: 21  # MAINTAINER_INSTANT
+  ```
+
+- <span class="sev-badge sev-low">[LOW]</span> **setCCIPAdmin + setAuthority gated by 3-of-6 Safe with 7-day delay (appropriate)**
+  setAuthority replaces the entire AccessManager; 7-day delay is right. setCCIPAdmin controls the cross-chain adapter; also 7-day. Signer bar remains 3/6 across operational roles.
+
+- <span class="sev-badge sev-info">[INFO]</span> **AccessManager ADMIN_ROLE (role 0) held by 4-of-6 Safe, not an EOA**
+  Transfer to the 4/6 Safe occurred at block 24721241 (2026-03-04). Role 0 has 0 exec delay; grant delay 7 days. Adding a new admin takes 7 days; removing one is instant.
+
+  **Verify on-chain:**
+
+  ```bash
+  cast call 0xe167330E2Eac88666de253e9607C6d9ae0cA2824 'hasRole(uint64,address)(bool,uint32)' 0 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 --rpc-url $RPC
+  # → expect: (true, 0)
+  ```
+
+  **Key addresses:**
+
+  - ADMIN Safe (4/6) — [`0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96`](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96)
+
+- <span class="sev-badge sev-info">[INFO]</span> **Both Safes share the same 6 owner keys — effective governance bar is 3-of-6 for all ops**
+  ADMIN (4/6) and MAINTAINER (3/6) have IDENTICAL signer sets. Compromise of 3 keys: pause instantly, deny-list / raise cap in 1 day, upgrade in 3 days. The 4/6 ADMIN threshold only matters for role re-wiring.
+
+  **Verify on-chain:**
+
+  ```bash
+  cast call 0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96 'getOwners()(address[])' --rpc-url $RPC
+  # → expect: 6 EOAs identical to MAINTAINER Safe owners
+  ```
+
+- <span class="sev-badge sev-info">[INFO]</span> **Role taxonomy: roles 4 + 21-25 are unlabeled (no RoleLabel events)**
+  Monitoring/UI tools that index RoleLabel events miss the roles that actually gate apxUSD's critical functions. Documentation gap.
+
+- <span class="sev-badge sev-info">[INFO]</span> **Fira exposure is indirect — PT-apxUSD, not apxUSD at rest**
+  Mint/pause/deny-list primarily hit apxUSD holders; Fira holds PT. Indirect paths: (1) Apyx CR feed → Morpho oracle → Fira liquidations; (2) Pendle TWAP needs apxUSD to be transferable. Treat the 3/6-Safe upgrade path as the dominant governance risk vector.
 
 
 ### Code Quality  (score 7, confidence 0.65)
@@ -578,23 +629,25 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
 
 ### Cross-Chain Surface  (score 8, confidence 0.85)
 
-- <span class="sev-badge sev-info">[INFO]</span> **apxUSD underlying token (0x98a878b1cd98131b271883b390f68d2c90674665 on Ethereum) is curren…**
+- <span class="sev-badge sev-info">[INFO]</span> **apxUSD is live on 2 EVM chains: Ethereum mainnet and Base**
+  Bridging is Chainlink CCIP-only (no LayerZero OFT, no Wormhole, no Axelar, no custom-admin bridge). Solana expansion announced but not yet live.
 
-- <span class="sev-badge sev-info">[INFO]</span> **PT-apxUSD itself (0x92a6a01b07984de46c24e8eba248449beb8b1dcb) is a Pendle PT and lives on …**
+- <span class="sev-badge sev-info">[INFO]</span> **PT-apxUSD itself is Ethereum-only (Pendle PT, not cross-chain)**
 
-- <span class="sev-badge sev-info">[INFO]</span> **Cross-chain bridging is done via Chainlink CCIP (not LayerZero, Wormhole, or a custom brid…**
+  **Key addresses:**
 
-- <span class="sev-badge sev-info">[INFO]</span> **CCIP has RMN (Risk Management Network) enabled by default on all lanes — RMN is a secondar…**
+  - PT-apxUSD — [`0x92a6a01b07984de46c24e8eba248449beb8b1dcb`](https://etherscan.io/address/0x92a6a01b07984de46c24e8eba248449beb8b1dcb)
+  - SY-apxUSD — [`0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC`](https://etherscan.io/address/0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC)
+  - apxUSD underlying (mainnet) — [`0x98A878b1Cd98131B271883B390f68D2c90674665`](https://etherscan.io/address/0x98A878b1Cd98131B271883B390f68D2c90674665)
 
-- <span class="sev-badge sev-info">[INFO]</span> **No LayerZero OFT deployment, no custom multisig-admin bridge, no Wormhole, no Axelar — onl…**
+- <span class="sev-badge sev-info">[INFO]</span> **CCIP has RMN (Risk Management Network) enabled — strongest bridge defense available**
+  Secondary independent DON that monitors and can veto the primary Committing DON. Default on all CCIP lanes today.
 
-- <span class="sev-badge sev-info">[INFO]</span> **Solana expansion publicly announced as 'coming soon' (not yet live)…**
+- <span class="sev-badge sev-info">[INFO]</span> **Base-side token pool + CCIP admin registry not inspected on-chain in this pass**
+  Not flagged: CCIP lanes ship with RMN by default and Apyx is the canonical issuer on both ends. Worth a one-time Base-RPC verification before any Base-side Fira exposure.
 
-- <span class="sev-badge sev-info">[INFO]</span> **No deployments on Polygon, Arbitrum, Optimism, Avalanche, or any other EVM chain outside E…**
-
-- <span class="sev-badge sev-info">[INFO]</span> **Base-side apxUSD token pool + CCIP token admin registry configuration not inspected on-cha…**
-
-- <span class="sev-badge sev-info">[INFO]</span> **Rubric placement: 2 chains via canonical bridge with RMN sits between '10' (single chain) …**
+- <span class="sev-badge sev-info">[INFO]</span> **2 chains via canonical bridge with RMN → score 8 per rubric**
+  Small surface (2 chains) + reputable bridge + RMN. Deducted from 10 only because Solana expansion will grow surface and a multi-chain surface exists at all.
 
 
 ### Team Transparency  (score 8, confidence 0.75)
@@ -628,36 +681,65 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
 
 ### Liquidity Depth  (score 5, confidence 0.85)
 
-- <span class="sev-badge sev-info">[INFO]</span> **On-chain discovery: PT 0x92a6a01b07984de46c24e8eba248449beb8b1dcb -> SY 0x4f116eE5BCD227d1…**
+- <span class="sev-badge sev-high">[HIGH]</span> **Aggregators do NOT support PT-apxUSD as input — custom liquidator path required**
+  Paraswap and Odos both return 'no routes' for PT-apxUSD input. Fira liquidator must implement 3-hop path: PT→SY via Pendle market, SY→apxUSD via SY.redeem, apxUSD→USDC via Curve/V4.
 
-- <span class="sev-badge sev-info">[INFO]</span> **apxUSD total supply 180M (18 dec)…**
+  **Verify on-chain:**
 
-- <span class="sev-badge sev-info">[INFO]</span> **Only two meaningful apxUSD/USDC pools on mainnet: Curve StableSwap-NG 0xe1b96555bbeca40e58…**
+  ```bash
+  # Paraswap route-check for PT-apxUSD as source token (returns no routes)
+  curl -s 'https://apiv5.paraswap.io/prices?srcToken=0x92a6a01b07984de46c24e8eba248449beb8b1dcb&destToken=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48&amount=1000000000000000000&srcDecimals=18&destDecimals=6&side=SELL&network=1' | jq '.priceRoute // .error'
+  # → expect: "ESTIMATED_LOSS_GREATER_THAN_MAX_IMPACT" or a `null`/no-route error — PT is not in the token list
+  ```
 
-- <span class="sev-badge sev-info">[INFO]</span> **Curve slippage ladder apxUSD -> USDC (verified via get_dy on-chain): $100k -> 0…**
+- <span class="sev-badge sev-medium">[MEDIUM]</span> **Aggregators (Paraswap, Odos) route 100% through Curve — V4 pool is un-routed**
+  Aggregator-only path caps practical depth at Curve levels (~$6M at 2%). Getting V4 + Curve combined depth requires a custom split router.
 
-- <span class="sev-badge sev-info">[INFO]</span> **Uniswap V4 slippage ladder (verified via V4 Quoter 0x52f0e24d1c21c8a0cb1e5a5dd6198556bd9e1…**
+- <span class="sev-badge sev-medium">[MEDIUM]</span> **Concentration risk: ~$34M TVL in 2 pools on one chain; Apyx is POL-heavy**
+  If Apyx redeems protocol-owned liquidity, both pools thin fast. ~600 apxUSD holders total (GeckoTerminal). Kraken APXUSD/USD CEX volume negligible (~$3.3k/24h) so no meaningful CEX fallback.
 
-- <span class="sev-badge sev-info">[INFO]</span> **Aggregator routing (Paraswap, Odos): BOTH route 100% through Curve for all sizes tested ($…**
+- <span class="sev-badge sev-info">[INFO]</span> **Asset graph: PT-apxUSD → SY-apxUSD → apxUSD (1:1 at maturity)**
+  Expiry 2026-06-18. SY is 1:1 with apxUSD; SY only accepts/returns apxUSD. apxUSD total supply 180M (18 dec), price ~$0.9997.
 
-- <span class="sev-badge sev-info">[INFO]</span> **COMBINED practical depth (router using V4 + Curve manually split): at 2% slippage, approxi…**
+  **Key addresses:**
 
-- <span class="sev-badge sev-info">[INFO]</span> **PT-apxUSD -> USDC routing: aggregators DO NOT support PT-apxUSD as input…**
+  - PT-apxUSD — [`0x92a6a01b07984de46c24e8eba248449beb8b1dcb`](https://etherscan.io/address/0x92a6a01b07984de46c24e8eba248449beb8b1dcb)
+  - SY-apxUSD — [`0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC`](https://etherscan.io/address/0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC)
+  - apxUSD — [`0x98A878b1Cd98131B271883B390f68D2c90674665`](https://etherscan.io/address/0x98A878b1Cd98131B271883B390f68D2c90674665)
 
-- <span class="sev-badge sev-info">[INFO]</span> **Pendle AMM state (via routerstatic + on-chain): PT balance in market 2…**
+- <span class="sev-badge sev-info">[INFO]</span> **Two meaningful apxUSD/USDC pools on mainnet: Curve NG + Uniswap V4**
+  Curve StableSwap-NG ~$16.5M TVL, A=100, fee 0.01%. Uniswap V4 pool ~$17.75M TVL, 0.01% fee. Combined ~$34M TVL.
 
-- <span class="sev-badge sev-info">[INFO]</span> **Post-expiry path (2026-06-18+): PT redeems 1:1 via YT/PT burn through YieldContractFactory…**
+  **Key addresses:**
 
-- <span class="sev-badge sev-info">[INFO]</span> **Liquidity concentration risk: two pools totaling ~$34M TVL, both on single chain, apxUSD i…**
+  - Curve apxUSD/USDC — [`0xe1b96555bbeca40e583bbb41a11c68ca4706a414`](https://etherscan.io/address/0xe1b96555bbeca40e583bbb41a11c68ca4706a414)
 
-- <span class="sev-badge sev-info">[INFO]</span> **Fira-specific liquidation sizing: at 88% LLTV and $1-3M position cap, a full liquidation o…**
+- <span class="sev-badge sev-info">[INFO]</span> **Curve slippage ladder (apxUSD→USDC) verified via on-chain get_dy**
+  $500k → 0.07%; $1M → 0.13%; $2M → 0.26%; $3M → 0.42%; $5M → 0.92%; $7M → 2.47%. ~$6M absorbable at 2% slippage on Curve alone.
 
-- <span class="sev-badge sev-info">[INFO]</span> **Scoring: $6M at 2% single-pool (Curve) + $3M at ~0% single-pool (V4) + aggregator routing …**
+  **Verify on-chain:**
+
+  ```bash
+  cast call 0xe1b96555bbeca40e583bbb41a11c68ca4706a414 'get_dy(int128,int128,uint256)(uint256)' 0 1 1000000000000000000000000 --rpc-url $RPC
+  # → expect: ~0.127% slippage on $1M input
+  ```
+
+- <span class="sev-badge sev-info">[INFO]</span> **Uniswap V4 absorbs $500k–$3M at <0.01%, reverts around $3.5–5M (concentrated-liquidity cliff)**
+  V4 Quoter used for measurement; V4 ladder is effectively free up to the depth cliff, zero after.
+
+- <span class="sev-badge sev-info">[INFO]</span> **Pendle AMM holds 2.39M PT + 3.64M SY (~$5.98M USD), 58 days to expiry, implied APY 14.71%**
+  Sizing: $500k = ~21% of AMM PT, $1M = ~43%, $2M = ~85%. Pendle swap quote API was inaccessible in this pass — exact pre-expiry slippage ladder needs fork simulation.
+
+- <span class="sev-badge sev-info">[INFO]</span> **Post-expiry path (2026-06-18+) is safer: PT redeems 1:1 via factory burn, no AMM slippage on PT leg**
+  Liquidator must support both pre- and post-expiry logic. Post-expiry is a 3-hop redemption with no AMM exposure on the PT leg.
+
+- <span class="sev-badge sev-info">[INFO]</span> **At proposed 88% LLTV and $1–3M cap, max liquidation dump is $880k–$2.64M — absorbed on Curve alone at 0.15–0.42%**
+  Well under the 3.73% liquidation incentive. Plumbing viable at the proposed cap; thin beyond $5M.
 
 
 ### Controversy  (score 5, confidence 0.75)
 
-- <span class="sev-badge sev-high">[HIGH]</span> **Structural similarity to Nov 2025 xUSD/Stream Finance collapse**
+- <span class="sev-badge sev-medium">[MEDIUM]</span> **Structural similarity to Nov 2025 xUSD/Stream Finance collapse**
   apxUSD occupies the same structural niche as Stream Finance's xUSD (collapsed Nov 4 2025): yield-backed stablecoin pushed as Pendle-PT'd collateral into Morpho-curated looped borrow strategies. Stream lost $93M on an 'external fund manager'; xUSD depegged 87-93% and cascaded to deUSD (-98%) with ~$285M+ bad debt across Morpho/Euler/Gearbox/Silo. Treated as a score-influencing pattern concern, not a red flag. Key differences vs Stream: Apyx custody is BitGo (qualified custodian) with PCAOB-registered monthly attestations, and backing is publicly-listed equity dividends rather than an off-chain fund-manager strategy. Mitigants exist, but the composability pattern (stablecoin → Pendle PT → Morpho loop) has demonstrably failed recently under stress.
   *Evidence:* https://blockeden.xyz/blog/2025/11/08/m-defi-contagion/
 
