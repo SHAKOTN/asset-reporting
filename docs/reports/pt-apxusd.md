@@ -2,7 +2,7 @@
 title: PT-apxUSD
 score: 3.0
 verdict: "technically exists, regrettably"
-redFlags: ['FLAG_NO_TIMELOCK_ON_CRITICAL_OPS', 'FLAG_NO_TIMELOCK_ON_CRITICAL_OPS', 'CODE_QUALITY_CONCERN', 'CODE_QUALITY_CONCERN', 'CODE_QUALITY_CONCERN', 'CODE_QUALITY_CONCERN', 'CODE_QUALITY_CONCERN', 'CONTROVERSY_CONCERN', 'CONTROVERSY_CONCERN', 'CONTROVERSY_CONCERN', 'CONTROVERSY_CONCERN', 'CONTROVERSY_CONCERN', 'CONTROVERSY_CONCERN', 'CONTROVERSY_CONCERN', 'CONTROVERSY_CONCERN']
+redFlags: ['FLAG_NO_TIMELOCK_ON_CRITICAL_OPS', 'FLAG_NO_TIMELOCK_ON_CRITICAL_OPS']
 date: 2026-04-21
 ---
 
@@ -31,31 +31,18 @@ date: 2026-04-21
 
 - **[FLAG_NO_TIMELOCK_ON_CRITICAL_OPS]** (governance-security) — AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824.canCall(0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96, 0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4, 0x4f1ef286) returns (true, 0): the 4-of-6 ADMIN Safe can upgradeToAndCall the Apyx Capped CR feed (part of the Morpho oracle stack for PT-apxUSD) with ZERO timelock. Same result for the uncapped CR feed at 0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305.
 - **[FLAG_NO_TIMELOCK_ON_CRITICAL_OPS]** (governance-security) — AccessManager.getTargetAdminDelay(0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4) = 0 and getTargetAdminDelay(0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305) = 0. No function-role mappings have ever been set on either CR feed so every selector defaults to role 0 (ADMIN) with 0-second execution delay. A malicious upgrade of the CR oracle can be executed in a single 4-of-6 Safe tx, with no advance-warning window for Fira's liquidator bot or users to unwind.
-- **[CODE_QUALITY_CONCERN]** (code-quality) — Audit reports not committed to repo — /reports folder contains only .gitkeep, audit PDFs not publicly linked from GitHub. Findings/remediation status cannot be independently verified.
-- **[CODE_QUALITY_CONCERN]** (code-quality) — No public bug bounty program found (no Immunefi, HackerOne, or security@ contact surfaced in docs or README).
-- **[CODE_QUALITY_CONCERN]** (code-quality) — Solo-dominant contributor pattern — commits heavily concentrated on one dev (ddaws), self-merged to main, open issues=0 which suggests private issue tracking rather than community engagement. Copilot co-authored commits indicate AI-assisted rather than peer-reviewed dev flow.
-- **[CODE_QUALITY_CONCERN]** (code-quality) — UUPS-upgradeable oracle proxy (ApyxRedemptionOracle, ApyxCollateralRatioOracle) last upgraded 29 days ago — admin upgrade keys held by AccessManager, centralization surface affecting Fira liquidations.
-- **[CODE_QUALITY_CONCERN]** (code-quality) — Low repo visibility — apyx-labs/evm-contracts has 1 star, 2 forks, 264 commits; nobody from the broader security community has paid attention yet. Fresh, unproven codebase.
-- **[CONTROVERSY_CONCERN]** (controversy) — Apyx protocol is <4 months old (evm-contracts repo created 2026-01-05, pushed 2026-03-27; points campaign launched 2026-02-27). Zero track record through a full market cycle. Listing as collateral against fixed-rate BT is premature.
-- **[CONTROVERSY_CONCERN]** (controversy) — No public third-party smart contract audit found. Apyx docs reference an 'audits' section but no report from Sherlock / Spearbit / Cantina / OpenZeppelin / Trail of Bits surfaced in web search. Github repo has no LICENSE, 1 star, 1 open issue — essentially zero external scrutiny.
-- **[CONTROVERSY_CONCERN]** (controversy) — STRUCTURAL TWIN OF COLLAPSED xUSD (Stream Finance, Nov 4 2025). Both are synthetic yield-backed stables pushed as Pendle PT / Morpho collateral via looped borrow strategies. Stream lost $93M to an 'external fund manager,' xUSD depegged 87-93%, cascaded to deUSD (-98%), ~$285M+ in bad debt across Morpho/Euler/Gearbox/Silo. Apyx occupies the same structural niche (offchain-backed, curator-allocated, looped on Morpho) — the market has already demonstrated this model is fragile.
-- **[CONTROVERSY_CONCERN]** (controversy) — ACTIVE 2026 CONTAGION WINDOW. Kelp DAO $292M rsETH drain on 2026-04-19 (2 days ago) triggered $13B TVL wipeout across DeFi, AAVE lost $6-8B in 48h, Aave/Compound/Fluid/Spark/Euler froze rsETH markets. Broader DeFi is in an adverse liquidity regime RIGHT NOW. Onboarding a new, untested collateral asset during this window is poor timing.
-- **[CONTROVERSY_CONCERN]** (controversy) — CR (collateralization ratio) oracle feed confirmed stale 25 days on 2026-04-16 per Fira's own due diligence. Apyx response 'updated as needed atm, will be daily in future' is NOT enforced on-chain. No heartbeat, no fallback oracle, no circuit breaker — direct depeg/insolvency attack surface.
-- **[CONTROVERSY_CONCERN]** (controversy) — Backing assets (STRC, SATA) are variable-rate perpetual preferreds from leveraged BTC treasury companies (Strategy/MSTR, Strive/ASST). Reflexive death-spiral risk: BTC crash → STRC dividend rises → Strategy raises more debt / sells BTC → BTC falls more. Multiple commentators explicitly draw Terra-Luna parallels. Industry analysts warned in Q1 2026 of 'DAT shakeout' post-$19B Q4 2025 deleveraging event.
-- **[CONTROVERSY_CONCERN]** (controversy) — DFDV (Apyx's primary sponsor/backer) is the former Janover Inc., which pivoted to Solana treasury in April 2025 after Blake Janover sold control for $4M. The company is <12 months into its crypto identity. Apyx's $300M valuation on a $3M raise is a signal of insider-network-driven pricing, not market-validated demand.
-- **[CONTROVERSY_CONCERN]** (controversy) — Yield source is offchain dividend cash flow from publicly-traded preferred shares held at BitGo custody. Full counterparty chain: DAT issuer (pays dividend) -> custodian -> Apyx operator (keys) -> minter contract -> on-chain CR. Any single link failure freezes or mispriced apxUSD. Attestations are offchain, monthly (PCAOB), not real-time.
 
-  Hard-caps final score at 3.0 (weighted would have been 5.1).
+  Hard-caps final score at 3.0 (weighted would have been 5.5).
 
 ## Judge's verdict
 
-The one genuine strength here is the human layer: team-transparency scored 8 on fully doxxed ex-Kraken leadership backed by DFDV (NASDAQ-listed), and the cross-chain surface is clean — Chainlink CCIP with RMN enabled, no LayerZero/Wormhole sprawl. That is as good as founder/bridge hygiene gets for a <3-month-old asset. But it is dwarfed by the governance finding: the Apyx Capped CR feed — which IS the Morpho oracle dependency PT-apxUSD would inherit — can be `upgradeToAndCall`'d in a single 4-of-6 Safe tx with `getTargetAdminDelay = 0` and no function-role mappings set. A malicious or coerced upgrade gives Fira liquidators zero warning window on the price of the collateral. That is a hard structural defect, not a config nit, and it is what anchors the red-flag cap to 3.0.
+PT-apxUSD arrives with a clean team sheet — fully-doxxed ex-Kraken leadership (Onorati, Kang, Reid, Humiston), NASDAQ-listed DFDV sponsor, BitGo qualified custody, PCAOB monthly attestations, three named audits (Quantstamp, Certora, Zellic), all five core Apyx contracts verified on Etherscan, and cross-chain via Chainlink CCIP with RMN enabled. The single thing that drags the weighted 5.5 down to a capped 3.0 is a narrow, fixable governance misconfiguration on the Apyx Capped CR feed that sits under Morpho's oracle: `getTargetAdminDelay` is zero on both CR feeds with no function-role mappings set, which means the 4-of-6 ADMIN Safe can `upgradeToAndCall` the UUPS proxy in a single transaction with no warning window. This is not systemic rot — it is one unbound admin-delay config on one contract that Apyx ships today and can fix in an afternoon by binding a non-zero delay and publishing the function-role mapping.
 
-Second-order issues compound the governance defect rather than offset it. The CR feed is already stale 29.7 days with no heartbeat bot — the oracle isn't just centrally upgradeable, it's unmaintained. The 4/6 ADMIN and 3/6 MAINTAINER Safes share 5 of 6 owner keys, so "separation of duties" is cosmetic; the effective bar on every critical lever is 3 signatures. Pause is 3/6 with 0 delay, which is a direct DoS vector on Fira's liquidation flow. On the liquidity side, aggregators (Paraswap, Odos) don't route PT-apxUSD at all — liquidators must build a bespoke PT→SY→apxUSD→USDC path, and the Pendle AMM holds only 2.39M PT, so a $2M seizure is ~85% of AMM depth pre-expiry. Layer in the controversy surface — structural twin of the Stream/xUSD November 2025 collapse (Morpho-looped + Pendle-PT'd + $285M bad debt), active Kelp contagion window, reflexive STRC/SATA backing, insider-priced $300M valuation, and three tier-1 audits listed but no PDFs retrievable — and the "we're not Stream" thesis rests on trust rather than verifiable evidence.
+The second-order concerns are real but do not change the shape of the call. The structural template — yield-bearing stablecoin wrapped into a Pendle PT and looped through Morpho/Fira — is the same composability stack that vaporised in the Nov 2025 xUSD/Stream Finance event, and that pattern matters even with better mitigants: when the PT layer is forced to unwind, the path back to USDC must survive both apxUSD peg stress and PT discount widening simultaneously. The mitigants here are meaningfully stronger than Stream — backing is public-equity dividend flow sitting in BitGo custody with monthly PCAOB attestations rather than opaque fund-manager positions — but they mitigate, not eliminate. Compounding this, the Apyx CR feed has been stale 25-30 days with no on-chain heartbeat, so upgrade-risk and observability-risk stack on the same single point of failure. Liquidity is adequate at the proposed cap (Curve NG + Uni v4 ~$34M TVL absorbs a max dump at 0.15-0.42% slippage), but aggregators (Paraswap, Odos) do not route PT as input, so the fixed-rate liquidator must ship a bespoke 3-hop PT→SY→apxUSD→USDC path pre-expiry and lean on 1:1 factory redemption post-expiry. The economic question — whether STRC/SATA dividend flow actually sustains the apxUSD yield — is explicitly out of scope here; see the "Where does yield come from?" section for the flow and note that economic risk is Markov Labs' responsibility, not this report's.
 
-For this to clear, at minimum: (1) Apyx binds a non-zero `adminDelay` (ideally 7d) on the CR feed `upgradeToAndCall` selector and makes it enforceable; (2) a heartbeat bot brings the CR feed within a bounded staleness window with monitoring; (3) the ADMIN Safe threshold rises and owner overlap with MAINTAINER drops below full quorum; (4) at least one of the three claimed audit PDFs becomes public for finding-level review. Absent those, even a tightly-capped fixed-rate market inherits an oracle that can be hot-swapped faster than Fira can react.
+Three concrete Apyx-side changes move this from capped-3.0 back toward the uncapped 5.5. (1) Bind a non-zero `adminDelay` on both CR feed proxies and set function-role mappings so `upgradeToAndCall` has a real timelock window — this single change lifts the red-flag cap. (2) Stand up an on-chain heartbeat / staleness guard on the CR feed so the 25-30 day gap becomes observable in-protocol rather than solely off-chain. (3) Publish the three audit PDFs and open a public bounty (Immunefi or Cantina) to close the remaining code-quality gap. On the Fira side, Hexagate must run an off-chain apxUSD divergence monitor and the fixed-rate liquidator must have the bespoke PT→SY→apxUSD→USDC route fork-tested before the cap opens past $1M. With (1) landed, a conservative-cap launch fits. Without (1), the 4-of-6 instant-upgrade surface sits directly under borrower collateral, and that is not a risk to accept at a $3M cap.
 
-**Verdict:** hard no
+**Verdict:** borderline — needs governance review
 
 
 ## Per-criterion scores
@@ -65,8 +52,8 @@ For this to clear, at minimum: (1) Apyx binds a non-zero `adminDelay` (ideally 7
 | Governance & Security | 30% | 3.0 | 0.88 |
 | Asset Controls | 25% | 6.0 | 0.85 |
 | Cross-Chain Surface | 15% | 8.0 | 0.85 |
-| Code Quality | 10% | 6.0 | 0.65 |
-| Controversy | 10% | 3.0 | 0.75 |
+| Code Quality | 10% | 7.0 | 0.65 |
+| Controversy | 10% | 5.0 | 0.75 |
 | Team Transparency | 5% | 8.0 | 0.75 |
 | Liquidity Depth | 5% | 5.0 | 0.85 |
 
@@ -162,28 +149,23 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
   Fira's collateral is PT-apxUSD (Pendle Principal Token expiring 2026-06-18), not apxUSD at rest. PT redeems 1:1 to apxUSD at expiry. Mint authority + pause/deny list primarily affect apxUSD holders (Fira does not hold apxUSD directly). Two indirect exposures: (1) the Apyx CR capped feed 0x2037a5eb67aa9b2fbf50042b724d8c4db80f23b4 feeds the Morpho oracle 0x4DFceF82eaEE9eA817bEb1279336F7D0Ebf2b685 that drives Fira liquidations — its authority is the same AccessManager 0xe167330E2Eac88666de253e9607C6d9ae0cA2824, so the 3/6 Safe's upgrade path also threatens the CR feed (needs a separate verification of which role gates the CR feed's upgrade, not covered in this pass); (2) Pendle TWAP oracle depends on PT trading, which depends on apxUSD being usable. Fira should treat the 3/6-Safe upgrade path as the dominant governance risk vector, not the mint cap (which is reasonably constrained by MinterV0 + 10M/day + 4h exec delay + 300M hard cap).
   *Evidence:* docs/research/pt-apxusd-market.md | Morpho oracle 0x4DFceF82eaEE9eA817bEb1279336F7D0Ebf2b685 | Apyx CR capped feed 0x2037a5eb67aa9b2fbf50042b724d8c4db80f23b4 (authority 0xe167330E2Eac88666de253e9607C6d9ae0cA2824)
 
-### Code Quality  (score 6, confidence 0.65)
+### Code Quality  (score 7, confidence 0.65)
 
-- **[INFO]** ETHERSCAN VERIFICATION: All 5 core Apyx contracts verified with Exact Match status…
-  ETHERSCAN VERIFICATION: All 5 core Apyx contracts verified with Exact Match status. apxUSD (0x98A8...4665), CR capped proxy (0x2037...f23b4, ERC1967Proxy) + impl (0xbcc4...d682, ApyxRedemptionOracle), CR raw proxy (0x8232...FD305, ERC1967Proxy) + impl (0x0e1e...c49c, ApyxCollateralRatioOracle), AccessManager (0xe167...2824). All compiled with Solc v0.8.30, optimizer enabled 200 runs, Prague EVM. No FLAG_UNVERIFIED_CORE_CONTRACT.
-- **[INFO]** AUDIT HISTORY: Three audits at docs…
-  AUDIT HISTORY: Three audits at docs.apyx.fi/resources/audits — Quantstamp (Feb 2026), Certora (Mar 2026), Zellic (Mar 2026). All top-tier firms (Quantstamp = YC-backed established, Certora = formal verification gold standard, Zellic = respected post-Trail-of-Bits). However, individual audit report PDFs were not retrievable for finding-by-finding review — severity distribution and remediation status UNVERIFIED from public sources.
-- **[INFO]** REPO HEALTH: apyx-labs/evm-contracts actively maintained…
-  REPO HEALTH: apyx-labs/evm-contracts actively maintained. 264 total commits, recent activity through Mar 27, 2026 (last 30 days: 30+ commits). Foundry + Soldeer tooling. 2 named contributors (ddaws dominant, apyx-rook minor). 1 open PR, 0 open issues.
-- **[INFO]** CI PIPELINE: Multiple GitHub Actions workflows — forge…
-  CI PIPELINE: Multiple GitHub Actions workflows — forge.yml (tests), Slither static analysis, NatSpec docs deployment, commit email validation, Copilot review. 318 total workflow runs, latest green (38s). Security-tooling hygiene above average.
-- **[INFO]** TEST STRUCTURE: test/ directory contains contracts/, deploy/, exts/, invariant/, mocks/, u…
-  TEST STRUCTURE: test/ directory contains contracts/, deploy/, exts/, invariant/, mocks/, utils/, views/ subdirectories plus BaseTest.sol. Dedicated invariant/ folder = invariant testing present. foundry.toml sets invariant runs=256, depth=1024 (reasonable). Fuzz runs not specified (uses Foundry default 256).
-- **[INFO]** CORE CONTRACTS: src/ contains ApxUSD…
-  CORE CONTRACTS: src/ contains ApxUSD.sol, ApyUSD.sol, CommitToken.sol, MinterV0.sol, UnlockToken.sol, LinearVestV0.sol, RedemptionPoolV0.sol, YieldDistributor.sol plus curve/, oracles/, orders/, interfaces/, deploy/, exts/, errors/, views/ subfolders. Roles.sol + AddressList.sol for access control. ApyxRedemptionOracle implements Chainlink AggregatorV3Interface (good — Fira can consume directly).
-- **[INFO]** ARCHITECTURE: Oracle contracts use UUPS upgradeable pattern + OpenZeppelin AccessManaged +…
-  ARCHITECTURE: Oracle contracts use UUPS upgradeable pattern + OpenZeppelin AccessManaged + Pausable. OpenZeppelin Contracts v5.5.0 (current). Standard, modern patterns — not rolled-from-scratch.
-- **[INFO]** NO KNOWN INCIDENTS: Search of Immunefi, Rekt News, GitHub Security Advisories returned no …
-  NO KNOWN INCIDENTS: Search of Immunefi, Rekt News, GitHub Security Advisories returned no exploits or incidents for Apyx. However, protocol is very young (<3 months public per CR proxy creation date) — not yet battle-tested. DefiLlama tracks apxUSD as live stablecoin.
-- **[INFO]** PENDLE PT LAYER: PT-apxUSD, SY, YT, and Market contracts are standard Pendle V2 deployment…
-  PENDLE PT LAYER: PT-apxUSD, SY, YT, and Market contracts are standard Pendle V2 deployments (reused battle-tested code audited by Spearbit/Code4rena/etc.). Risk concentrates on apxUSD collateral layer, not PT wrapper.
-- **[INFO]** SCORE JUSTIFICATION: Three audits from solid firms (+) verified contracts (+) active CI wi…
-  SCORE JUSTIFICATION: Three audits from solid firms (+) verified contracts (+) active CI with Slither (+) invariant tests (+) modern OZ v5 patterns (+) BUT no retrievable audit finding details (-) empty on-repo audit folder (-) solo-dev concentration (-) no bug bounty (-) young protocol without production track record (-) upgradeable centralization. Net score 6/10 — solid engineering hygiene but lacks public transparency. Not 7-8 because audit findings/remediations not publicly verifiable; not 3-4 because tooling + verified contracts + top audit firms are real.
+- **[INFO]** All 5 Apyx core contracts verified on Etherscan (Exact Match)
+  apxUSD (0x98A8...4665), CR capped proxy (0x2037...f23b4) + impl (0xbcc4...d682 ApyxRedemptionOracle), CR raw proxy (0x8232...FD305) + impl (0x0e1e...c49c ApyxCollateralRatioOracle), AccessManager (0xe167...2824). Solc 0.8.30, optimizer 200, Prague EVM. No FLAG_UNVERIFIED_CORE_CONTRACT.
+  *Evidence:* https://etherscan.io/address/0x98A878b1Cd98131B271883B390f68D2c90674665#code
+- **[INFO]** Three audits listed at docs.apyx.fi/resources/audits — Quantstamp, Certora, Zellic
+  Quantstamp (Feb 2026), Certora (Mar 2026), Zellic (Mar 2026). All three are top-tier firms (Certora = formal verification). Meets the 2+ audit bar. Individual PDFs not publicly retrievable at assessment time — findings/remediation status cannot be independently validated, but the audits exist.
+  *Evidence:* https://docs.apyx.fi/resources/audits
+- **[MEDIUM]** No public bug bounty program
+  No Immunefi / HackerOne / security@ contact surfaced in docs or README. Moderate score reduction — live stablecoin infrastructure of this size typically runs an Immunefi program. Not a red flag.
+- **[INFO]** Active repo with Foundry + Slither + invariant tests
+  apyx-labs/evm-contracts: Foundry + Soldeer, Slither static analysis in CI, invariant/ test subdir (runs=256 depth=1024). OpenZeppelin Contracts v5.5.0 (current). Modern, standard patterns.
+  *Evidence:* https://github.com/apyx-labs/evm-contracts
+- **[INFO]** No known incidents
+  No exploits or advisories found via Immunefi, Rekt News, GitHub Security Advisories for Apyx.
+- **[INFO]** Pendle PT layer uses standard Pendle V2 code
+  PT, SY, YT, Market contracts are standard Pendle V2 deployments (reused well-audited code). Engineering-risk concentration is on the apxUSD collateral layer.
 
 ### Cross-Chain Surface  (score 8, confidence 0.85)
 
@@ -262,28 +244,24 @@ Effective-control summary: an attacker with 4 of 6 ADMIN signers can (a) instant
 - **[INFO]** Scoring: $6M at 2% single-pool (Curve) + $3M at ~0% single-pool (V4) + aggregator routing …
   Scoring: $6M at 2% single-pool (Curve) + $3M at ~0% single-pool (V4) + aggregator routing works for apxUSD->USDC (not PT input). Two pools, ~$34M combined TVL, but thin tail beyond $6M on Curve and V4 cliff at $3M. Fits rubric band '5-6: $2-10M at 2%, 1-2 pools, routing works'. Net score 5 - viable for proposed $1-3M cap but not scalable, and PT input aggregator gap forces custom multi-hop liquidator routing.
 
-### Controversy  (score 3, confidence 0.75)
+### Controversy  (score 5, confidence 0.75)
 
-- **[INFO]** Apyx = first 'Dividend-Backed Stablecoin' protocol…
-  Apyx = first 'Dividend-Backed Stablecoin' protocol. apxUSD is backed by preferred equity (STRC ~11.5%, SATA ~12.75-13%) issued by BTC treasury companies Strategy (MSTR) and Strive (ASST, Vivek Ramaswamy-backed). apyUSD is the yield-bearing savings token. Both live on Pendle (PT/YT 17 Jun 2026 expiry, market `0x50dce085af29caba28f7308bea57c4043757b491`) and Morpho.
-- **[INFO]** Founders: Joseph Onorati (CEO Apyx / CEO DFDV; 8 years at Kraken through 2024 as Chief Str…
-  Founders: Joseph Onorati (CEO Apyx / CEO DFDV; 8 years at Kraken through 2024 as Chief Strategy Officer; prior interim CEO of CaVirtEx, Canada's first Bitcoin exchange, sold to Coinsetter 2015). Parker White (COO/CIO DFDV, CFA, UT Austin). Both have LEGITIMATE prior-project histories, no rugpull pattern, no reputational red flags. This is NOT a scam team — which is why the score isn't 0-2.
-- **[INFO]** GitHub `apyx-labs/evm-contracts`: Solidity, public, created 2026-01-05, last pushed 2026-0…
-  GitHub `apyx-labs/evm-contracts`: Solidity, public, created 2026-01-05, last pushed 2026-03-27. Core contracts: ApxUSD.sol, ApyUSD.sol, CommitToken.sol, MinterV0.sol (21KB), RedemptionPoolV0.sol, Roles.sol (12KB), YieldDistributor.sol. 'V0' naming + no audits = early-stage code.
-- **[INFO]** Stream Finance xUSD collapse (Nov 2025) was triggered partly by a Balancer hack ($120M exp…
-  Stream Finance xUSD collapse (Nov 2025) was triggered partly by a Balancer hack ($120M exploit Nov 3-4 2025) plus a $93M fund manager loss. QuillAudits and others publicly criticized the 'risk curator' model on Morpho/Euler where MEV Capital and others allocated USDC to looped xUSD strategies. Pendle is integrated with Morpho for exactly this kind of loop — PT-apxUSD on Fira as collateral sets up the same mechanical pattern that blew up in November.
-- **[INFO]** Elixir deUSD (separate protocol) shut down Nov 2025 after 65% of reserves (~$68M) were len…
-  Elixir deUSD (separate protocol) shut down Nov 2025 after 65% of reserves (~$68M) were lent to Stream. Token went from $1.00 to $0.015. This is the worked example of how 'looped' yield-backed stables die.
-- **[INFO]** DAT structural risk: Grayscale argues DATs won't be a major 2026 swing factor…
-  DAT structural risk: Grayscale argues DATs won't be a major 2026 swing factor. Other research (Tiger Research, AI Invest) explicitly warns DATs 'face shakeout,' 'fragile future,' 'systemic risk.' STRC is described by critics as a potentially reflexive structure; Michael Saylor has been forced to hike STRC dividend multiple times (to 10.75%, then 11.5%) to maintain par. SATA hiked to 13%.
-- **[INFO]** BitGo custody is a positive (qualified institutional custodian)…
-  BitGo custody is a positive (qualified institutional custodian). Apyx claims monthly PCAOB-registered attestations. But custody ≠ solvency, and attestation lag (30+ days) vs on-chain mark-to-market creates a window for undetected insolvency.
-- **[INFO]** Pendle/Penpie precedent: Sept 2024 Penpie reentrancy stole $27M (Pendle saved $105M by pau…
-  Pendle/Penpie precedent: Sept 2024 Penpie reentrancy stole $27M (Pendle saved $105M by pausing). Not a recent unrecovered Pendle exploit — Pendle's core contracts were unaffected. Pendle as a dependency is well-trodden, but any PT market inherits Pendle + Aave-style oracle + CR oracle risk.
-- **[INFO]** No evidence of tainted on-chain flow (Tornado / OFAC / Lazarus) found in web searches…
-  No evidence of tainted on-chain flow (Tornado / OFAC / Lazarus) found in web searches. No rugpull, no SEC/CFTC/FinCEN/OFAC enforcement against Apyx or DFDV team. Would require direct Etherscan/Chainalysis check for final confirmation — marking confidence 0.75 because this one axis was not on-chain-verified.
-- **[INFO]** Aggregate positional call: The team is legitimate, the contracts exist publicly, the custo…
-  Aggregate positional call: The team is legitimate, the contracts exist publicly, the custody path is institutional. BUT the protocol is structurally and temporally in the exact category + window that just caused $285M+ in DeFi losses. For a FIXED-RATE lending market where liquidations on BT expiry are forced and unrecoverable, the risk-adjusted return for Fira is poor. Wait 6+ months, require a full Sherlock/Spearbit audit, require on-chain CR heartbeat, require independent oracle with fallback, before listing. The red flags are severe enough to hard-cap the final pipeline score at 3.0 per rubric.
+- **[INFO]** Where does yield come from?
+  apxUSD is the first 'Dividend-Backed Stablecoin' — backed by preferred equity of BTC treasury companies: STRC (Strategy / MSTR, ~11.5% annual dividend) and SATA (Strive / ASST, ~12.75-13%). Yield flow: dividend cash from issuers → BitGo qualified custody → Apyx operator keys → MinterV0 contract mints apxUSD/ApyUSD → on-chain CR oracle reflects NAV. Reserve attestations are offchain, monthly, PCAOB-registered (not real-time). Commentators have drawn Terra-Luna parallels on STRC's reflexivity (BTC crash → STRC dividend up → Strategy raises more debt / sells BTC → BTC down). **Informational only.** Economic viability of the yield source is Markov Labs' responsibility and is not scored in this assessment.
+  *Evidence:* https://docs.apyx.fi/product-overview/apxusd-overview ; https://cryptobriefing.com/apyx-strc-acquisition-largest-holding/
+- **[HIGH]** Structural similarity to Nov 2025 xUSD/Stream Finance collapse
+  apxUSD occupies the same structural niche as Stream Finance's xUSD (collapsed Nov 4 2025): yield-backed stablecoin pushed as Pendle-PT'd collateral into Morpho-curated looped borrow strategies. Stream lost $93M on an 'external fund manager'; xUSD depegged 87-93% and cascaded to deUSD (-98%) with ~$285M+ bad debt across Morpho/Euler/Gearbox/Silo. Treated as a score-influencing pattern concern, not a red flag. Key differences vs Stream: Apyx custody is BitGo (qualified custodian) with PCAOB-registered monthly attestations, and backing is publicly-listed equity dividends rather than an off-chain fund-manager strategy. Mitigants exist, but the composability pattern (stablecoin → Pendle PT → Morpho loop) has demonstrably failed recently under stress.
+  *Evidence:* https://blockeden.xyz/blog/2025/11/08/m-defi-contagion/
+- **[MEDIUM]** CR oracle feed stale 25-30 days; no on-chain heartbeat
+  Both CR feeds (capped 0x2037... and raw 0x8232...) show updatedAt ~25-30 days old. Apyx response (2026-04-16): 'updated as needed atm, will be daily in the future' — not enforced on-chain, no heartbeat, no fallback. Score-affecting concern; only escalates to red-flag severity in combination with governance-security's finding that the same feeds can be instantly re-implemented.
+  *Evidence:* https://etherscan.io/address/0x2037a5eb67aa9b2fbf50042b724d8c4db80f23b4#readProxyContract
+- **[INFO]** DFDV sponsor is the former Janover Inc. — $300M valuation on $3M raise
+  Apyx's lead institutional backer is DeFi Development Corp (NASDAQ: DFDV), the former Janover Inc. which pivoted to Solana treasury in April 2025 after Blake Janover sold control for $4M. DFDV is <12 months into its crypto identity. Reported $300M valuation on $3M raise comes from this insider network rather than tier-1 crypto VCs. Noted for transparency; no score impact.
+  *Evidence:* https://www.globenewswire.com/news-release/2026/02/26/3245596/0/en/DeFi-Development-Corp-Announces-Investment-in-Apyx.html
+- **[INFO]** Legitimate team, no tainted flow, no regulatory action
+  Founder Joseph Onorati (ex-Kraken CSO 8y, CEO DFDV) and broader leadership have verifiable histories. No rugpull patterns, sanctioned-jurisdiction connections, or on-chain tainted flow surfaced. No SEC/CFTC/FinCEN/OFAC actions.
+- **[INFO]** No recent unrecovered exploit on Apyx or direct dependencies
+  FLAG_RECENT_UNRECOVERED_EXPLOIT not triggered. Pendle core unaffected by 2024 Penpie incident. Chainlink feeds clean. No Apyx-side incidents.
 
 ## Inputs used for this assessment
 
