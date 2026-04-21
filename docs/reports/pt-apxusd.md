@@ -7,20 +7,30 @@ date: 2026-04-21
 ---
 
 <div class="score-banner">
-  <div class="speedometer"><svg width="400" height="220" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
-  <!-- arc background -->
-  <path d="M 40 200 A 160 160 0 0 1 360 200" stroke="#ddd" stroke-width="20" fill="none"/>
-  <!-- arc colored zones -->
-  <path d="M 40 200 A 160 160 0 0 1 152 51" stroke="#d33" stroke-width="20" fill="none"/>
-  <path d="M 152 51 A 160 160 0 0 1 248 51" stroke="#e80" stroke-width="20" fill="none"/>
-  <path d="M 248 51 A 160 160 0 0 1 360 200" stroke="#3a3" stroke-width="20" fill="none"/>
-  <!-- needle, rotates around center (200, 200) -->
-  <line x1="200" y1="200" x2="200" y2="60"
-        stroke="#111" stroke-width="4" stroke-linecap="round"
-        transform="rotate(9.0, 200, 200)"/>
-  <circle cx="200" cy="200" r="8" fill="#111"/>
-  <!-- score label -->
-  <text x="200" y="190" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="#111">5.5</text>
+  <div class="speedometer"><svg class="risk-speedometer" width="420" height="240" viewBox="0 0 420 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Asset risk score 5.5 of 10">
+  <!-- subtle drop-shadow filter -->
+  <defs>
+    <filter id="dsoft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+  <!-- background arc (mid-gray, visible on both themes) -->
+  <path d="M 50 210 A 160 160 0 0 1 370 210" stroke="#6b7280" stroke-width="22" fill="none" stroke-linecap="round"/>
+  <!-- colored zones: red 0-3, amber 3-7, green 7-10 -->
+  <path d="M 50 210 A 160 160 0 0 1 162 61" stroke="#ef4444" stroke-width="22" fill="none" stroke-linecap="round"/>
+  <path d="M 162 61 A 160 160 0 0 1 258 61" stroke="#f59e0b" stroke-width="22" fill="none" stroke-linecap="round"/>
+  <path d="M 258 61 A 160 160 0 0 1 370 210" stroke="#10b981" stroke-width="22" fill="none" stroke-linecap="round"/>
+  <!-- needle shadow -->
+  <line x1="210" y1="210" x2="210" y2="70" stroke="black" stroke-opacity="0.35" stroke-width="8" stroke-linecap="round" filter="url(#dsoft)" transform="rotate(9.0, 210, 210)"/>
+  <!-- needle: white fill with dark outline for legibility on both themes -->
+  <line x1="210" y1="210" x2="210" y2="70" stroke="#111" stroke-width="7" stroke-linecap="round" transform="rotate(9.0, 210, 210)"/>
+  <line x1="210" y1="210" x2="210" y2="70" stroke="#ffffff" stroke-width="4" stroke-linecap="round" transform="rotate(9.0, 210, 210)"/>
+  <!-- hub -->
+  <circle cx="210" cy="210" r="11" fill="#111" stroke="#ffffff" stroke-width="2"/>
+  <!-- score label: white fill with black stroke outline so it works on any bg -->
+  <text x="210" y="195" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="44" font-weight="800" fill="#ffffff" stroke="#000000" stroke-width="4" paint-order="stroke fill" stroke-linejoin="round">5.5</text>
+  <!-- "/10" subscript -->
+  <text x="210" y="225" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#9ca3af" stroke="#000000" stroke-width="2" paint-order="stroke fill">out of 10</text>
 </svg></div>
   <div class="meme"><img src="/assets/score-6.png" alt="score 6 meme"/></div>
 </div>
@@ -50,20 +60,32 @@ date: 2026-04-21
 - No public bug-bounty program (Immunefi/Cantina) — pulls code-quality down despite 3 audits.
 - Aggregators (Paraswap, Odos) do not route PT-apxUSD as input — liquidator needs a bespoke 3-hop PT→SY→apxUSD→USDC path pre-expiry.
 
-### 🔧 What would lift the score
-
-- Bind non-zero `adminDelay` on both CR feed proxies and add function-role mappings for `upgradeToAndCall` so upgrades have a real timelock window.
-- Ship an on-chain heartbeat / staleness guard on the CR feeds with a bounded staleness window, plus a dedicated operator role.
-- Raise ADMIN Safe threshold and reduce signer overlap with MAINTAINER-LONG so the two Safes are not effectively the same key set.
-- Publish the three audit PDFs (Quantstamp / Certora / Zellic) and open a public bug bounty on Immunefi or Cantina.
-- Fira-side pre-req: Hexagate off-chain apxUSD-peg divergence monitor + fork-tested bespoke liquidator path before size scales up.
-
 ### 🎯 Verdict
 
-**Verdict:** borderline — ship with caveats, conditional listing only after governance + oracle mitigations land
+**Verdict:** borderline — moderate risk, listable only at a conservative cap
 
-Rationale one-liner: Score 5.5 reflects strong team/custody/liquidity against real governance gaps (zero-delay CR upgrades, stale feeds, Safe overlap); listable conservatively once timelock + heartbeat are fixed.
+Rationale one-liner: Score 5.5 reflects strong team/custody/liquidity and standard Pendle wrapping against a zero-delay CR-oracle upgrade path, stale feeds, and 5/6 signer overlap between ADMIN and MAINTAINER Safes.
 
+
+## Contracts & Multisigs
+
+Canonical addresses for the protocol. Click any address to open it on Etherscan.
+
+| Label | Address | Type | Notes |
+|---|---|---|---|
+| PT-apxUSD-18JUN2026 (Pendle PT) | [`0x92a6…1dcb`](https://etherscan.io/address/0x92a6a01b07984de46c24e8eba248449beb8b1dcb) | ERC-20 (PT) | Collateral token. Expiry 1781740800 (2026-06-18). |
+| SY-apxUSD | [`0x4f11…b3FC`](https://etherscan.io/address/0x4f116eE5BCD227d1a1C4f57918D694a4aBe7b3FC) | ERC1967Proxy (Pendle SY) | Holds ~53.6M apxUSD. Upgradeable. |
+| YT-apxUSD | [`0x7807…7C22`](https://etherscan.io/address/0x7807c638383B95aC5d58De10d3079e2140D47C22) | ERC-20 (YT) | Pendle yield token. |
+| Pendle PT↔SY AMM | [`0x50DC…b491`](https://etherscan.io/address/0x50DCE085af29CABa28f7308beA57C4043757b491) | Pendle Market | Primary liquidation path pre-expiry. |
+| apxUSD token | [`0x98A8…4665`](https://etherscan.io/address/0x98A878b1Cd98131B271883B390f68D2c90674665) | UUPS proxy | Implementation 0xDd71…ccB4. Mint gated by MinterV0. |
+| apxUSD implementation | [`0xDd71…ccB4`](https://etherscan.io/address/0xDd71Fd677fde2ed2579a3c45204f41a11016ccB4) | Logic | Swappable via role 24 + 3d delay. |
+| MinterV0 (mint controller) | [`0x2c36…a76e`](https://etherscan.io/address/0x2c36e1adFaA80ee0324B04cC814F5207Bb7Ba76e) | Contract (role 4) | 10M/day mint cap, signed EIP-712 orders, 4h role delay. |
+| AccessManager | [`0xe167…2824`](https://etherscan.io/address/0xe167330E2Eac88666de253e9607C6d9ae0cA2824) | OZ AccessManager | Self-admin delay = 0. Role 0 grant delay = 7d. |
+| Apyx Capped CR oracle (Morpho BASE_FEED_2) | [`0x2037…23b4`](https://etherscan.io/address/0x2037a5Eb67aa9B2FBF50042B724D8c4dB80F23b4) | UUPS proxy | Target admin delay = 0. Stale ~30 days at assessment. |
+| Apyx Raw CR oracle | [`0x8232…D305`](https://etherscan.io/address/0x823210Eb6390B88e2b8ad7152DF5D8F30B8FD305) | UUPS proxy | Target admin delay = 0. Feeds capped oracle. |
+| Morpho PT-apxUSD oracle | [`0x4DFc…b685`](https://etherscan.io/address/0x4DFceF82eaEE9eA817bEb1279336F7D0Ebf2b685) | MorphoChainlinkOracleV2 | Consumes capped CR feed as BASE_FEED_2. |
+| ADMIN Safe (4/6) | [`0xabdd…5e96`](https://etherscan.io/address/0xabdd8c8ee69e5f5180eb9352aeffc5ceead65e96) | Gnosis Safe 4-of-6 | Holds AccessManager role 0. 0 exec delay. No Safe Guard/Modules. |
+| MAINTAINER-LONG Safe (3/6) | [`0xf986…3ce2`](https://etherscan.io/address/0xf9862efc1704ac05e687f66e5cd8c130e5663ce2) | Gnosis Safe 3-of-6 | Roles 2/21/22/23/24/25. Shares 5-of-6 owners with ADMIN Safe. |
 
 ## Per-criterion scores
 
