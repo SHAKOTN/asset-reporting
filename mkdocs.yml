@@ -40,3 +40,8 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Reports:
+      - PT-apxUSD: reports/pt-apxusd.md
+
+not_in_nav: |
+  /reports/*.md

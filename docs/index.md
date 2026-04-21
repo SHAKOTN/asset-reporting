@@ -14,4 +14,4 @@ Any red flag raised hard-caps the score at **3.0 / 10**.
 
 | Asset | Score | Verdict | Red Flags | Date | Market |
 |---|---|---|---|---|---|
-| [PT-apxUSD](reports/PT-apxUSD.md) | 3.0 | technically exists, regrettably | 15 flags | 2026-04-21 | fixed |
+| [PT-apxUSD](reports/pt-apxusd.md) | 3.0 | technically exists, regrettably | 15 flags | 2026-04-21 | fixed |
