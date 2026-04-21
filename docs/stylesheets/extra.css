@@ -35,3 +35,63 @@ blockquote + p > em {
 h2:has(+ p + ul) {
   color: #c00;
 }
+
+/* Severity badges on findings — critical glows, high is solid red,
+   medium amber, low green, info neutral. Color hits on both light
+   and dark theme; text-shadow gives the glow on dark bg.
+*/
+.sev-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  margin-right: 4px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  letter-spacing: 0.02em;
+}
+
+.sev-critical {
+  color: #ff2d2d;
+  text-shadow:
+    0 0 4px rgba(255, 45, 45, 0.85),
+    0 0 10px rgba(255, 45, 45, 0.45);
+  background: rgba(255, 45, 45, 0.08);
+  border: 1px solid rgba(255, 45, 45, 0.35);
+}
+
+.sev-high {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.30);
+}
+
+.sev-medium {
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.08);
+  border: 1px solid rgba(217, 119, 6, 0.30);
+}
+
+.sev-low {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.28);
+}
+
+.sev-info {
+  color: #6b7280;
+  background: rgba(107, 114, 128, 0.06);
+  border: 1px solid rgba(107, 114, 128, 0.25);
+}
+
+/* Dark theme: shift palette slightly for legibility */
+[data-md-color-scheme="slate"] .sev-critical {
+  color: #ff5a5a;
+  text-shadow:
+    0 0 6px rgba(255, 90, 90, 0.95),
+    0 0 14px rgba(255, 90, 90, 0.55);
+}
+[data-md-color-scheme="slate"] .sev-high    { color: #f87171; }
+[data-md-color-scheme="slate"] .sev-medium  { color: #fbbf24; }
+[data-md-color-scheme="slate"] .sev-low     { color: #4ade80; }
+[data-md-color-scheme="slate"] .sev-info    { color: #9ca3af; }
