@@ -1,0 +1,42 @@
+site_name: Asset Risk Reports
+site_description: Technical and controversy risk assessments for Fira Markets collateral candidates
+site_author: SHAKOTN
+site_url: https://shakotn.github.io/asset-reporting/
+repo_url: https://github.com/SHAKOTN/asset-reporting
+repo_name: SHAKOTN/asset-reporting
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: red
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: red
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.top
+    - content.code.copy
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - tables
+
+nav:
+  - Home: index.md

@@ -1,0 +1,37 @@
+/* Score banner: speedometer on left, meme on right */
+.score-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin: 1rem 0 0.5rem 0;
+  flex-wrap: wrap;
+}
+
+.score-banner .speedometer {
+  flex: 0 0 auto;
+}
+
+.score-banner .meme img {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.verdict-tagline {
+  text-align: center;
+  font-size: 1.4rem;
+  margin: 0.25rem 0 2rem 0;
+  color: #555;
+}
+
+/* Warning banner for low-confidence sections */
+blockquote + p > em {
+  color: #b33;
+}
+
+/* Red flags section */
+h2:has(+ p + ul) {
+  color: #c00;
+}

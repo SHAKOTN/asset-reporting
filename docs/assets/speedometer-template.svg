@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="220" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+  <!-- Reference template — actual speedometer is inlined per-page by render.py -->
+  <!-- Arc background -->
+  <path d="M 40 200 A 160 160 0 0 1 360 200" stroke="#ddd" stroke-width="20" fill="none"/>
+  <!-- Red zone (0-5): 0° to 90° -->
+  <path d="M 40 200 A 160 160 0 0 1 152 51" stroke="#d33" stroke-width="20" fill="none"/>
+  <!-- Yellow zone (5-7): 90° to 126° -->
+  <path d="M 152 51 A 160 160 0 0 1 248 51" stroke="#e80" stroke-width="20" fill="none"/>
+  <!-- Green zone (7-10): 126° to 180° -->
+  <path d="M 248 51 A 160 160 0 0 1 360 200" stroke="#3a3" stroke-width="20" fill="none"/>
+  <!-- Needle (parameterized angle in live render) -->
+  <line x1="200" y1="200" x2="200" y2="60" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="200" cy="200" r="8" fill="#111"/>
+  <!-- Score label (parameterized in live render) -->
+  <text x="200" y="190" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="#111">?</text>
+</svg>

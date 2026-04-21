@@ -1,0 +1,9 @@
+# Weights sum to 1.0. Edit here to re-tune without touching the skill.
+# Changes take effect on the next assessment run.
+governance-security: 0.30
+asset-controls: 0.25
+cross-chain-surface: 0.15
+code-quality: 0.10
+controversy: 0.10
+team-transparency: 0.05
+liquidity-depth: 0.05
