@@ -14,5 +14,6 @@ Any red flag raised hard-caps the score at **3.0 / 10**.
 
 | Asset | Score | Verdict | Red Flags | Date | Market |
 |---|---|---|---|---|---|
+| [Saturn](reports/saturn.md) | 3.0 | technically exists, regrettably | 14 flags | 2026-05-13 | fixed |
 | [reUSD](reports/reusd.md) | 3.0 | technically exists, regrettably | 8 flags | 2026-05-01 | fixed |
 | [PT-apxUSD](reports/pt-apxusd.md) | 5.5 | fine, I guess, sigh | — | 2026-04-21 | fixed |
